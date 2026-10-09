@@ -111,34 +111,35 @@ export const SearchResultModal: React.FC<SearchResultModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50 shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <Building className="w-5 h-5 text-[#0070d2]" />
-              <h3 className="text-base sm:text-lg font-bold text-gray-900">
+              <Building className="w-4 h-4 sm:w-5 sm:h-5 text-[#0070d2]" />
+              <h3 className="text-sm sm:text-lg font-bold text-gray-900">
                 {query ? `"${query}" 검색 결과` : '전국 주요 시공사례 및 표준 견적'}
               </h3>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 break-keep">
               에어컨신(airconSIN)의 실측 기반 100% 정직한 실제 시공 데이터입니다.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label="닫기"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* List Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+        <div className="p-3.5 sm:p-6 overflow-y-auto space-y-3.5 sm:space-y-4 flex-1">
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-gray-500 space-y-3">
-              <p className="text-sm font-semibold">
+            <div className="py-10 text-center text-gray-500 space-y-3">
+              <p className="text-sm font-semibold break-keep">
                 검색하신 &apos;{query}&apos;에 대한 데이터가 아직 등록되지 않았습니다.
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 break-keep">
                 대한민국 전 지역 모든 아파트/건물 맞춤 무료 실측 견적이 가능합니다.
               </p>
               <button
@@ -156,57 +157,57 @@ export const SearchResultModal: React.FC<SearchResultModalProps> = ({
             filtered.map((item) => (
               <div
                 key={item.id}
-                className="p-5 rounded-2xl border border-gray-200 hover:border-[#0070d2] hover:bg-[#f6faff] transition-all duration-200 group relative flex flex-col justify-between"
+                className="p-3.5 sm:p-5 rounded-2xl border border-gray-200 hover:border-[#0070d2] hover:bg-[#f6faff] transition-all duration-200 group relative flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-[#0070d2] transition-colors">
+                      <h4 className="text-sm sm:text-base font-bold text-gray-900 group-hover:text-[#0070d2] transition-colors break-keep">
                         {item.name}
                       </h4>
                       <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                        <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                         <span>{item.region}</span>
                         <span className="text-gray-300">·</span>
                         <span className="text-blue-600 font-medium">{item.type}</span>
                       </p>
                     </div>
 
-                    <span className="text-[11px] font-semibold text-gray-400 shrink-0 bg-gray-100 px-2 py-0.5 rounded">
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-gray-400 shrink-0 bg-gray-100 px-2 py-0.5 rounded">
                       {item.date}
                     </span>
                   </div>
 
-                  <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-white p-3 rounded-xl border border-gray-100">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-xs bg-white p-2.5 sm:p-3 rounded-xl border border-gray-100">
                     <div>
-                      <span className="text-gray-400 block text-[11px]">설치 구성</span>
-                      <span className="font-semibold text-gray-800">{item.units}</span>
+                      <span className="text-gray-400 block text-[10.5px] sm:text-[11px]">설치 구성</span>
+                      <span className="font-semibold text-gray-800 break-keep">{item.units}</span>
                     </div>
                     <div>
-                      <span className="text-gray-400 block text-[11px]">적용 모델</span>
-                      <span className="font-semibold text-gray-800">{item.brand}</span>
+                      <span className="text-gray-400 block text-[10.5px] sm:text-[11px]">적용 모델</span>
+                      <span className="font-semibold text-gray-800 break-keep">{item.brand}</span>
                     </div>
                     <div className="sm:col-span-2 pt-1 border-t border-gray-50">
-                      <span className="text-gray-400 block text-[11px]">실제 시공 견적가</span>
-                      <span className="font-extrabold text-[#0070d2] text-sm">
+                      <span className="text-gray-400 block text-[10.5px] sm:text-[11px]">실제 시공 견적가</span>
+                      <span className="font-extrabold text-[#0070d2] text-xs sm:text-sm">
                         {item.priceRange}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-gray-500 mt-2.5 flex items-center gap-1.5">
+                  <p className="text-[11px] text-gray-500 mt-2 flex items-center gap-1.5 break-keep">
                     <CheckCircle className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                     <span>{item.note}</span>
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-end">
+                <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-end">
                   <button
                     onClick={() => {
                       onSelectEstimate(item);
                       onClose();
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0070d2] group-hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#0070d2] group-hover:underline cursor-pointer"
                   >
                     <span>이 조건으로 빠른 상담 신청</span>
                     <ArrowRight className="w-3.5 h-3.5" />

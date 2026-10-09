@@ -45,29 +45,30 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl animate-scaleUp border border-gray-100 relative"
+        className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl animate-scaleUp border border-gray-100 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+          aria-label="닫기"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#0070d2] flex items-center justify-center mb-4 shadow-xs">
-            <Lock className="w-7 h-7" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-50 text-[#0070d2] flex items-center justify-center mb-3 sm:mb-4 shadow-xs">
+            <Lock className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
 
-          <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
+          <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight">
             관리자 로그인
           </h3>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 mt-1 break-keep">
             홈페이지 컨텐츠 수정을 위해 관리자 비밀번호를 입력해주세요.
           </p>
 
-          <form onSubmit={handleSubmit} className="w-full mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="w-full mt-5 sm:mt-6 space-y-4">
             <div className="relative">
               <input
                 type="password"

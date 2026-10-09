@@ -102,38 +102,38 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
   };
 
   return (
-    <section id="contact" className="w-full bg-[#f0f7fd] py-16 md:py-24 border-t border-[#d2e5f8]">
+    <section id="contact" className="w-full bg-[#f0f7fd] py-12 sm:py-16 md:py-24 border-t border-[#d2e5f8] scroll-mt-20">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
           
           {/* Left Column: Heading and Contact Action */}
           <div className="lg:col-span-5 text-left">
             <span className="text-xs sm:text-sm font-bold text-[#0070d2]">
               {siteData.consultationSection?.kicker || `${siteData.company.slogan} 무료견적 상담신청`}
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-900 mt-2 tracking-tight leading-snug whitespace-pre-line">
+            <h2 className="text-xl sm:text-3xl md:text-[34px] font-bold text-gray-900 mt-1.5 sm:mt-2 tracking-tight leading-snug whitespace-pre-line break-keep">
               {siteData.consultationSection?.title || '에어컨신은 언제나\n고객과 소통합니다'}
             </h2>
 
-            <p className="mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-normal whitespace-pre-line">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-normal whitespace-pre-line break-keep">
               {siteData.consultationSection?.description || '상담부터 고객님께서 이용할 수 있는 모든 경로를 열어두었습니다.\n언제든 문의주시면 친절하고 정직하게 안내 드리겠습니다.'}
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3">
               <a
                 href={`tel:${siteData.company.phone}`}
-                className="inline-flex items-center justify-center gap-2 bg-[#0070d2] hover:bg-[#005fb8] text-white px-7 py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0070d2] hover:bg-[#005fb8] text-white px-7 py-3.5 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95"
               >
                 <Phone className="w-4 h-4" />
-                <span>{siteData.consultationSection?.buttonText || '문의하기'} ({siteData.company.phone})</span>
+                <span>{siteData.consultationSection?.buttonText || '전화 문의하기'} ({siteData.company.phone})</span>
               </a>
             </div>
 
-            <div className="mt-6 text-xs text-gray-500 space-y-1">
+            <div className="mt-5 sm:mt-6 text-xs text-gray-500 space-y-1.5 break-keep">
               <p>• {siteData.consultationSection?.bullet1 || '연중무휴: 08:00 ~ 20:00 (야간 및 주말 긴급상담 가능)'}</p>
               <p>• {siteData.consultationSection?.bullet2 || '현장 방문 실측 및 레이저 맞춤 견적서 발송 100% 무료'}</p>
               <p className="flex items-center gap-1.5 text-blue-700 font-semibold pt-1">
-                <Mail className="w-3.5 h-3.5" />
+                <Mail className="w-3.5 h-3.5 shrink-0" />
                 <span>접수 알림 수신처: {targetEmail}</span>
               </p>
             </div>
@@ -141,13 +141,13 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
 
           {/* Right Column: Lead Form */}
           <div className="lg:col-span-7">
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-200/80">
               {submitted ? (
-                <div className="py-10 text-center space-y-4 animate-fadeIn">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-blue-50 text-[#0070d2] flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8" />
+                <div className="py-8 sm:py-10 text-center space-y-4 animate-fadeIn">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full bg-blue-50 text-[#0070d2] flex items-center justify-center">
+                    <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-keep">
                     상담 신청이 정상 접수되었습니다!
                   </h3>
                   <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-100 text-xs text-blue-900 leading-relaxed max-w-md mx-auto text-left space-y-1">
@@ -180,7 +180,7 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
                         if (errors.name) setErrors({ ...errors, name: '' });
                       }}
                       placeholder="성함을 입력해주세요."
-                      className={`w-full px-4 py-3 text-xs sm:text-sm rounded-xl border bg-white text-gray-800 placeholder-gray-400 focus:outline-none transition-all ${
+                      className={`w-full px-3.5 sm:px-4 py-3 text-base sm:text-sm rounded-xl border bg-white text-gray-800 placeholder-gray-400 focus:outline-none transition-all ${
                         errors.name
                           ? 'border-red-400 focus:ring-2 focus:ring-red-200'
                           : 'border-gray-200 focus:border-[#0070d2] focus:ring-2 focus:ring-blue-100'
@@ -203,7 +203,7 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
                       value={formData.phone}
                       onChange={handlePhoneChange}
                       placeholder="연락처를 입력해주세요."
-                      className={`w-full px-4 py-3 text-xs sm:text-sm rounded-xl border bg-white text-gray-800 placeholder-gray-400 focus:outline-none transition-all ${
+                      className={`w-full px-3.5 sm:px-4 py-3 text-base sm:text-sm rounded-xl border bg-white text-gray-800 placeholder-gray-400 focus:outline-none transition-all ${
                         errors.phone
                           ? 'border-red-400 focus:ring-2 focus:ring-red-200'
                           : 'border-gray-200 focus:border-[#0070d2] focus:ring-2 focus:ring-blue-100'
@@ -226,7 +226,7 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       placeholder="설치 희망 지역, 평수 또는 문의 내용을 입력해주세요."
-                      className="w-full px-4 py-3 text-xs sm:text-sm rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0070d2] focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+                      className="w-full px-3.5 sm:px-4 py-3 text-base sm:text-sm rounded-xl border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0070d2] focus:ring-2 focus:ring-blue-100 transition-all resize-none"
                     />
                   </div>
 
@@ -268,7 +268,7 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-[#0070d2] hover:bg-[#005fb8] text-white py-3.5 rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full bg-[#0070d2] hover:bg-[#005fb8] text-white py-3.5 rounded-xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <span>전송 중...</span>

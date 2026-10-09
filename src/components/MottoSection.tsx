@@ -54,29 +54,29 @@ export const MottoSection: React.FC = () => {
     : '';
 
   return (
-    <section className="w-full bg-white py-14 border-t border-gray-100">
+    <section className="w-full bg-white py-10 sm:py-14 border-t border-gray-100">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
           
           {/* Left / Top Text Block */}
-          <div className="lg:col-span-6 text-left space-y-4">
+          <div className="lg:col-span-6 text-left space-y-3 sm:space-y-4">
             {/* Subtle blue dash motif */}
-            <div className="flex items-center gap-1 text-[#0070d2] tracking-widest text-lg font-bold">
+            <div className="flex items-center gap-1 text-[#0070d2] tracking-widest text-base sm:text-lg font-bold">
               <span>{motto.dashMotif || '----'}</span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-gray-900 tracking-tight leading-snug">
+            <h2 className="text-xl sm:text-3xl lg:text-[32px] font-bold text-gray-900 tracking-tight leading-snug break-keep">
               {motto.title}
             </h2>
 
-            <p className="text-sm sm:text-base text-gray-600 font-normal leading-relaxed">
+            <p className="text-xs sm:text-base text-gray-600 font-normal leading-relaxed break-keep">
               {motto.subtitle}
             </p>
           </div>
 
           {/* Right / Bottom Video Player Block */}
           <div className="lg:col-span-6">
-            <div className="relative w-full aspect-16/9 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-slate-950 group">
+            <div className="relative w-full aspect-16/9 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl border-2 sm:border-4 border-white bg-slate-950 group">
               {videoId ? (
                 <iframe
                   className="w-full h-full object-cover"

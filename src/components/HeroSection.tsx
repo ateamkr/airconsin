@@ -80,12 +80,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
         })}
 
         {/* Main Central Hero Content with Text Action */}
-        <div className="relative z-20 max-w-[1100px] mx-auto px-6 pt-16 pb-24 md:py-24 w-full flex flex-col items-center text-center">
+        <div className="relative z-20 max-w-[1100px] mx-auto px-4 sm:px-6 pt-12 pb-20 sm:pt-16 sm:pb-24 md:py-24 w-full flex flex-col items-center text-center">
           
           {/* Badge (Text only, no icons) */}
           <div
             key={`badge-${textKey}`}
-            className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#0070d2]/90 border border-blue-400/40 text-white text-xs sm:text-sm font-bold mb-4 backdrop-blur-md shadow-sm transition-all duration-700"
+            className="inline-flex items-center px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#0070d2]/90 border border-blue-400/40 text-white text-[11px] sm:text-sm font-bold mb-3 sm:mb-4 backdrop-blur-md shadow-sm transition-all duration-700"
           >
             <span>{currentSlide.badge}</span>
           </div>
@@ -93,7 +93,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
           {/* Animated Main Headline */}
           <h1
             key={`title-${textKey}`}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-extrabold tracking-tight text-white mb-4 drop-shadow-md leading-tight transition-all duration-700"
+            className="text-2xl xs:text-[26px] sm:text-4xl md:text-5xl lg:text-[52px] font-extrabold tracking-tight text-white mb-3 sm:mb-4 drop-shadow-md leading-tight sm:leading-tight transition-all duration-700 break-keep max-w-3xl"
             style={{
               animation: 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
             }}
@@ -104,7 +104,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
           {/* Animated Subtitle */}
           <p
             key={`sub-${textKey}`}
-            className="text-sm sm:text-base md:text-lg text-slate-100 font-medium mb-8 max-w-2xl transition-all duration-700 drop-shadow-sm leading-relaxed"
+            className="text-xs sm:text-base md:text-lg text-slate-100 font-medium mb-6 sm:mb-8 max-w-2xl transition-all duration-700 drop-shadow-sm leading-relaxed break-keep px-2"
             style={{
               animation: 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
             }}
@@ -112,8 +112,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
             {currentSlide.subtitle}
           </p>
 
-          {/* Action CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3.5 mb-2">
+          {/* Action CTA Buttons - Beautiful responsive layout */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5 mb-2 w-full max-w-xs sm:max-w-none">
             <button
               type="button"
               onClick={() => {
@@ -124,7 +124,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
                   if (contactEl) contactEl.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className="px-6 py-3 rounded-full bg-[#0070d2] hover:bg-[#005fb8] active:scale-95 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-900/30 transition-all cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#0070d2] hover:bg-[#005fb8] active:scale-95 text-white font-bold text-xs sm:text-base shadow-lg shadow-blue-900/30 transition-all cursor-pointer text-center"
             >
               무료 견적 상담 신청하기
             </button>
@@ -134,25 +134,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
                 const portfolioEl = document.getElementById('portfolio');
                 if (portfolioEl) portfolioEl.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 rounded-full bg-white/20 hover:bg-white/30 active:scale-95 text-white font-semibold text-sm sm:text-base backdrop-blur-md border border-white/30 transition-all cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-white/20 hover:bg-white/30 active:scale-95 text-white font-semibold text-xs sm:text-base backdrop-blur-md border border-white/30 transition-all cursor-pointer text-center"
             >
               시공사례 둘러보기
             </button>
           </div>
 
           {/* Slide Navigation Controls & Indicators */}
-          <div className="mt-8 flex items-center gap-4">
+          <div className="mt-6 sm:mt-8 flex items-center gap-3 sm:gap-4">
             {/* Prev Button */}
             <button
               onClick={handlePrevSlide}
               aria-label="이전 슬라이드"
-              className="p-2 rounded-full bg-black/40 hover:bg-black/65 text-white transition-all cursor-pointer backdrop-blur-sm border border-white/20 active:scale-90"
+              className="p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/65 text-white transition-all cursor-pointer backdrop-blur-sm border border-white/20 active:scale-90"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
 
             {/* Slide Dots */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {slides.map((slide, idx) => {
                 const isActive = idx === currentSlideIndex;
                 return (
@@ -160,10 +160,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
                     key={slide.id || idx}
                     onClick={() => handleGoToSlide(idx)}
                     aria-label={`슬라이드 ${idx + 1}`}
-                    className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                       isActive
-                        ? 'w-8 bg-[#0070d2]'
-                        : 'w-2.5 bg-white/50 hover:bg-white/80'
+                        ? 'w-6 sm:w-8 bg-[#0070d2]'
+                        : 'w-2 sm:w-2.5 bg-white/50 hover:bg-white/80'
                     }`}
                   />
                 );
@@ -174,9 +174,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenQuoteModal }) =>
             <button
               onClick={handleNextSlide}
               aria-label="다음 슬라이드"
-              className="p-2 rounded-full bg-black/40 hover:bg-black/65 text-white transition-all cursor-pointer backdrop-blur-sm border border-white/20 active:scale-90"
+              className="p-1.5 sm:p-2 rounded-full bg-black/40 hover:bg-black/65 text-white transition-all cursor-pointer backdrop-blur-sm border border-white/20 active:scale-90"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>

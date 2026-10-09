@@ -31,26 +31,26 @@ export const StatsBar: React.FC<StatsBarProps> = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-white pt-2 pb-14 border-b border-gray-100 select-none"
+      className="relative w-full bg-white pt-3 pb-10 sm:pb-14 border-b border-gray-100 select-none"
     >
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 divide-y-0 md:divide-x divide-gray-100 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 sm:gap-y-8 divide-y-0 md:divide-x divide-gray-100 text-center">
           {stats.map((stat) => (
-            <div key={stat.id} className="flex flex-col items-center justify-center px-4">
+            <div key={stat.id} className="flex flex-col items-center justify-center px-2 sm:px-4">
               <div className="flex items-baseline justify-center">
                 <CountUpNumber
                   target={stat.value}
                   duration={1800}
                   startAnimation={isVisible}
                 />
-                <span className="text-xl sm:text-2xl font-bold text-[#0070d2] ml-0.5">
+                <span className="text-lg sm:text-2xl font-bold text-[#0070d2] ml-0.5">
                   {stat.unit}
                 </span>
               </div>
-              <p className="text-xs sm:text-[13px] text-gray-700 font-bold mt-1">
+              <p className="text-xs sm:text-[13px] text-gray-800 font-bold mt-1 break-keep">
                 {stat.label}
               </p>
-              <p className="text-[11px] text-gray-400 font-normal mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-gray-400 font-normal mt-0.5 break-keep">
                 {stat.subtext}
               </p>
             </div>
@@ -98,7 +98,7 @@ const CountUpNumber: React.FC<{
   const displayVal = target >= 1000 ? `${(currentVal / 1000).toFixed(currentVal >= 1000 ? 0 : 1)}K` : currentVal.toLocaleString();
 
   return (
-    <span className="text-3xl sm:text-4xl md:text-[42px] font-extrabold tracking-tight text-[#0070d2] font-sans tabular-nums">
+    <span className="text-2xl xs:text-3xl sm:text-4xl md:text-[42px] font-extrabold tracking-tight text-[#0070d2] font-sans tabular-nums">
       {displayVal}
     </span>
   );

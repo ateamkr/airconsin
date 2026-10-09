@@ -24,46 +24,46 @@ export const SpecialReasonSection: React.FC = () => {
   ];
 
   return (
-    <section className="w-full bg-white py-16 md:py-24 border-t border-gray-50">
+    <section id="credentials" className="w-full bg-white py-12 sm:py-16 md:py-24 border-t border-gray-50 scroll-mt-20">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
           {/* Left Column: Text & Credential Links */}
           <div className="lg:col-span-6 flex flex-col justify-center">
             <span className="text-xs sm:text-sm font-bold text-[#0070d2]">
               왜, 에어컨신이어야 하나요?
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-900 mt-2 tracking-tight">
+            <h2 className="text-xl sm:text-3xl md:text-[34px] font-bold text-gray-900 mt-1.5 sm:mt-2 tracking-tight break-keep">
               에어컨신이 특별한 이유!
             </h2>
 
-            <div className="mt-6 space-y-1">
-              <p className="text-xs sm:text-sm font-semibold text-gray-800">
+            <div className="mt-4 sm:mt-6 space-y-1">
+              <p className="text-xs sm:text-sm font-semibold text-gray-800 break-keep">
                 SAC 및 SI VRF, 시공 자격증 보유
               </p>
-              <p className="text-sm sm:text-base font-bold text-gray-900">
+              <p className="text-sm sm:text-base font-bold text-gray-900 break-keep">
                 20년 이상의 시스템 에어컨 주거 및 상업공간 전문 업체
               </p>
-              <p className="text-xs sm:text-[13px] text-gray-500 font-normal leading-relaxed pt-2">
+              <p className="text-xs sm:text-[13px] text-gray-500 font-normal leading-relaxed pt-2 break-keep">
                 저희 에어컨신은 20년 이상의 경험을 바탕으로, 주거 및 상업 공간에
                 특화된 시스템 에어컨 설치와 유지 보수 서비스를 제공하는 에어컨 시공 전문 업체입니다.
               </p>
             </div>
 
             {/* Credential Tags */}
-            <div className="mt-8 space-y-3">
+            <div className="mt-6 sm:mt-8 space-y-2.5 sm:space-y-3">
               {certList.map((cert, index) => {
                 const isActive = selectedCert === index;
                 return (
                   <button
                     key={index}
                     onClick={() => setSelectedCert(index)}
-                    className={`w-full text-left px-5 py-3.5 rounded-xl border transition-all duration-200 flex items-center justify-between group cursor-pointer ${
+                    className={`w-full text-left px-4 sm:px-5 py-3 sm:py-3.5 rounded-xl border transition-all duration-200 flex items-center justify-between group cursor-pointer ${
                       isActive
                         ? 'bg-[#f0f7fd] border-[#0070d2] text-[#0070d2] shadow-xs'
                         : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
                       <div
                         className={`w-2 h-2 rounded-full transition-colors ${
                           isActive ? 'bg-[#0070d2]' : 'bg-gray-300 group-hover:bg-blue-400'
@@ -74,7 +74,7 @@ export const SpecialReasonSection: React.FC = () => {
                       </span>
                     </div>
                     <CheckCircle2
-                      className={`w-4 h-4 transition-colors ${
+                      className={`w-4 h-4 transition-colors shrink-0 ${
                         isActive ? 'text-[#0070d2]' : 'text-gray-300 group-hover:text-blue-400'
                       }`}
                     />
@@ -86,43 +86,43 @@ export const SpecialReasonSection: React.FC = () => {
 
           {/* Right Column: Display of Framed Official Certificates */}
           <div className="lg:col-span-6">
-            <div className="bg-[#f0f7fd] rounded-3xl p-6 sm:p-8 border border-[#d2e5f8]/80 shadow-sm relative">
+            <div className="bg-[#f0f7fd] rounded-3xl p-4 sm:p-8 border border-[#d2e5f8]/80 shadow-sm relative">
               {/* Background ambient watermark */}
               <div className="absolute top-4 right-4 text-[#0070d2]/10 pointer-events-none">
-                <Award className="w-24 h-24" />
+                <Award className="w-20 h-20 sm:w-24 sm:h-24" />
               </div>
 
-              {/* Framed Certificates Side-by-Side */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 relative z-10">
+              {/* Framed Certificates: Responsive 1 col on mobile, 2 cols on tablet/desktop for crystal clear legibility */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 relative z-10">
                 {/* Certificate 1: Samsung SAC Certificate */}
                 <div
                   onClick={() => setPreviewModal('samsung')}
-                  className="group relative bg-[#1c222b] p-2.5 sm:p-3 rounded-lg shadow-xl cursor-pointer transform hover:-translate-y-1 transition-all duration-300 border border-slate-700"
+                  className="group relative bg-[#1c222b] p-2.5 sm:p-3 rounded-xl sm:rounded-lg shadow-xl cursor-pointer transform hover:-translate-y-1 transition-all duration-300 border border-slate-700"
                 >
                   {/* Outer Frame Bevel */}
-                  <div className="bg-white rounded p-3 sm:p-4 text-gray-900 border border-amber-900/20 relative flex flex-col justify-between min-h-[220px] sm:min-h-[260px] text-center">
+                  <div className="bg-white rounded p-3.5 sm:p-4 text-gray-900 border border-amber-900/20 relative flex flex-col justify-between min-h-[230px] sm:min-h-[260px] text-center">
                     {/* Header */}
                     <div>
-                      <div className="inline-block bg-[#0047AB] text-white px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-bold tracking-wider">
+                      <div className="inline-block bg-[#0047AB] text-white px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">
                         SAMSUNG
                       </div>
-                      <p className="text-[7px] text-gray-400 mt-1">시스템에어컨 전문 시공 인증</p>
-                      <h4 className="text-[10px] sm:text-[11px] font-extrabold text-gray-900 mt-2 border-b border-gray-200 pb-1.5 leading-tight">
+                      <p className="text-[8px] sm:text-[7px] text-gray-400 mt-1">시스템에어컨 전문 시공 인증</p>
+                      <h4 className="text-[12px] sm:text-[11px] font-extrabold text-gray-900 mt-2 border-b border-gray-200 pb-1.5 leading-tight">
                         SAC 설치 엔지니어 과정<br />교육 수료증
                       </h4>
                     </div>
 
                     {/* Certificate Body */}
-                    <div className="my-2 text-[7px] sm:text-[8px] text-gray-600 leading-tight space-y-0.5">
+                    <div className="my-2.5 text-[9px] sm:text-[8px] text-gray-600 leading-normal space-y-0.5">
                       <p className="font-semibold text-gray-800">성 명 : 문 필 주</p>
                       <p>자격번호 : SAC-2015-KO-0418</p>
-                      <p className="pt-1 text-[6.5px] text-gray-500">
+                      <p className="pt-1 text-[8px] sm:text-[6.5px] text-gray-500 break-keep">
                         위 사람은 당사 설치기준에 적합한 SAC 설치 엔지니어 전문가 교육과정을 이수하였기에 본 수료증을 수여함.
                       </p>
                     </div>
 
                     {/* Footer Seal */}
-                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[7px] text-gray-500">
+                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[8px] sm:text-[7px] text-gray-500">
                       <span>삼성공조사업부</span>
                       <div className="w-6 h-6 rounded-full border border-red-500 flex items-center justify-center text-red-600 text-[6px] font-bold rotate-6">
                         삼성인
@@ -136,7 +136,7 @@ export const SpecialReasonSection: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-center text-slate-300 mt-2 font-medium">
+                  <p className="text-[11px] sm:text-[10px] text-center text-slate-300 mt-2 font-medium">
                     삼성전자 SAC 시공자격증
                   </p>
                 </div>
@@ -144,10 +144,10 @@ export const SpecialReasonSection: React.FC = () => {
                 {/* Certificate 2: LG Electronics Certificate */}
                 <div
                   onClick={() => setPreviewModal('lg')}
-                  className="group relative bg-[#1c222b] p-2.5 sm:p-3 rounded-lg shadow-xl cursor-pointer transform hover:-translate-y-1 transition-all duration-300 border border-slate-700"
+                  className="group relative bg-[#1c222b] p-2.5 sm:p-3 rounded-xl sm:rounded-lg shadow-xl cursor-pointer transform hover:-translate-y-1 transition-all duration-300 border border-slate-700"
                 >
                   {/* Outer Frame Bevel */}
-                  <div className="bg-white rounded p-3 sm:p-4 text-gray-900 border border-amber-900/20 relative flex flex-col justify-between min-h-[220px] sm:min-h-[260px] text-center">
+                  <div className="bg-white rounded p-3.5 sm:p-4 text-gray-900 border border-amber-900/20 relative flex flex-col justify-between min-h-[230px] sm:min-h-[260px] text-center">
                     {/* Header */}
                     <div>
                       <div className="w-5 h-5 mx-auto rounded-full bg-[#A50034] text-white flex items-center justify-center text-[7px] font-bold mb-1">
@@ -156,21 +156,21 @@ export const SpecialReasonSection: React.FC = () => {
                       <h4 className="text-xs sm:text-sm font-extrabold tracking-widest text-gray-900 border-b border-gray-200 pb-1.5">
                         수 료 증
                       </h4>
-                      <p className="text-[7px] text-gray-400 mt-1">LG전자 공조전문시공인</p>
+                      <p className="text-[8px] sm:text-[7px] text-gray-400 mt-1">LG전자 공조전문시공인</p>
                     </div>
 
                     {/* Certificate Body */}
-                    <div className="my-2 text-[7px] sm:text-[8px] text-gray-600 leading-tight space-y-0.5">
+                    <div className="my-2.5 text-[9px] sm:text-[8px] text-gray-600 leading-normal space-y-0.5">
                       <p className="font-semibold text-gray-800">소 속 : 에어컨신</p>
                       <p className="text-gray-700">성 명 : 문 필 주</p>
                       <p>과 정 : MULTI V 시스템에어컨</p>
-                      <p className="pt-1 text-[6.5px] text-gray-500">
+                      <p className="pt-1 text-[8px] sm:text-[6.5px] text-gray-500 break-keep">
                         귀하는 LG전자 시스템에어컨 시공 및 감리 기술교육 전 과정을 우수한 성적으로 수료하였으므로 이를 증명함.
                       </p>
                     </div>
 
                     {/* Footer Seal */}
-                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[7px] text-gray-500">
+                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[8px] sm:text-[7px] text-gray-500">
                       <span>LG전자 대표이사</span>
                       <div className="w-6 h-6 rounded-full border border-red-600 flex items-center justify-center text-red-600 text-[6px] font-bold">
                         직인생략
@@ -184,7 +184,7 @@ export const SpecialReasonSection: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-center text-slate-300 mt-2 font-medium">
+                  <p className="text-[11px] sm:text-[10px] text-center text-slate-300 mt-2 font-medium">
                     LG전자 공식 수료증
                   </p>
                 </div>

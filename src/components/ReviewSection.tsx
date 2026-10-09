@@ -13,24 +13,24 @@ export const ReviewSection: React.FC<ReviewSectionProps> = () => {
   const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(null);
 
   return (
-    <section id="reviews" className="w-full bg-[#f8fbfe] py-20 border-t border-gray-100">
+    <section id="reviews" className="w-full bg-[#f8fbfe] py-12 sm:py-16 md:py-20 border-t border-gray-100 scroll-mt-20">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#0070d2] text-xs font-bold mb-2">
               <Star className="w-3.5 h-3.5 fill-[#0070d2]" />
               <span>실제 고객 100% 리얼 설치후기</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-3xl md:text-[34px] font-bold text-gray-900 tracking-tight break-keep">
               고객님이 직접 검증한 에어컨신 시공 후기
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 mt-2 font-normal">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1.5 sm:mt-2 font-normal break-keep">
               거품 없는 정직한 견적과 정밀한 시공으로 보답하는 에어컨신의 생생한 시공 현장입니다.
             </p>
           </div>
 
-          <div className="mt-4 md:mt-0 flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-2xs text-xs">
+          <div className="mt-4 md:mt-0 inline-flex self-start md:self-auto items-center gap-2 bg-white px-3.5 sm:px-4 py-2 rounded-xl border border-gray-200 shadow-2xs text-xs">
             <span className="text-gray-500">평균 만족도</span>
             <div className="flex items-center text-amber-400">
               {[...Array(5)].map((_, i) => (
@@ -42,7 +42,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = () => {
         </div>
 
         {/* 6 Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {reviews.map((rev) => (
             <div
               key={rev.id}
