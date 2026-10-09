@@ -1,0 +1,7 @@
+{
+  "name": "에어컨신 - 믿고 맡기는 에어컨설치",
+  "description": "믿고 맡기는 에어컨설치 에어컨신(airconSIN). 정직한 시공, 정직한 견적. 20년 이상의 주거 및 상업공간 시스템 에어컨 전문 시공 업체입니다. 상담문의: 010-4653-8887",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
