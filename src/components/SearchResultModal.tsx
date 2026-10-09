@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, MapPin, CheckCircle, ArrowRight, Building } from 'lucide-react';
+import { useSiteData } from '../context/SiteDataContext.tsx';
 
 interface CaseStudy {
   id: string;
@@ -93,7 +94,13 @@ export const SearchResultModal: React.FC<SearchResultModalProps> = ({
   onClose,
   onSelectEstimate,
 }) => {
-  const filtered = mockDatabase.filter(
+  const { siteData } = useSiteData();
+  const brandName = siteData?.company?.brandName || '에어컨신';
+
+  const filtered = mockDatabase.map((item) => ({
+    ...item,
+    note: item.note.replace('에어컨신', brandName),
+  })).filter(
     (item) =>
       item.name.toLowerCase().includes(query.toLowerCase()) ||
       item.region.toLowerCase().includes(query.toLowerCase()) ||

@@ -25,8 +25,10 @@ import {
   Phone,
   TrendingUp,
   Video,
+  Sparkles,
 } from 'lucide-react';
-import { useSiteData } from '../context/SiteDataContext.tsx';
+import { useSiteData, DEFAULT_SITE_DATA } from '../context/SiteDataContext.tsx';
+import { GrowthTrustCard, GrowthTrustData } from '../types/siteData.ts';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -54,6 +56,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     updateConsultationSection,
     deleteInquiry,
     resetToDefaults,
+    saveAllData,
   } = useSiteData();
 
   const [activeTab, setActiveTab] = useState<
@@ -68,7 +71,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
   const [asForm, setAsForm] = useState(siteData.afterService);
   const [estimateForm, setEstimateForm] = useState(siteData.honestEstimate);
   const [contactForm, setContactForm] = useState(siteData.consultationSection);
-  const [growthTrustForm, setGrowthTrustForm] = useState(siteData.growthTrust);
+  const [growthTrustForm, setGrowthTrustForm] = useState<GrowthTrustData>(
+    siteData.growthTrust || DEFAULT_SITE_DATA.growthTrust
+  );
   const [mottoForm, setMottoForm] = useState(
     siteData.mottoSection || {
       dashMotif: '----',
@@ -85,7 +90,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
       setAsForm(siteData.afterService);
       setEstimateForm(siteData.honestEstimate);
       setContactForm(siteData.consultationSection);
-      setGrowthTrustForm(siteData.growthTrust);
+      setGrowthTrustForm(siteData.growthTrust || DEFAULT_SITE_DATA.growthTrust);
       if (siteData.mottoSection) {
         setMottoForm(siteData.mottoSection);
       }
@@ -96,7 +101,81 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
 
   const triggerSaveToast = () => {
     setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2000);
+    setTimeout(() => setSaveToast(false), 2500);
+  };
+
+  // Growth & Trust helper handlers (bidirectional state sync)
+  const handleUpdateGrowthTrustHeader = (field: 'kicker' | 'title' | 'description', value: string) => {
+    setGrowthTrustForm((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+      updateGrowthTrust(updated);
+      return updated;
+    });
+    triggerSaveToast();
+  };
+
+  const handleUpdateGrowthTrustCard = (cardId: string, updates: Partial<GrowthTrustCard>) => {
+    setGrowthTrustForm((prev) => {
+      const updatedCards = (prev?.cards || []).map((card) =>
+        card.id === cardId ? { ...card, ...updates } : card
+      );
+      const updated = {
+        ...prev,
+        cards: updatedCards,
+      };
+      updateGrowthTrust(updated);
+      return updated;
+    });
+    triggerSaveToast();
+  };
+
+  const handleAddGrowthTrustCard = () => {
+    setGrowthTrustForm((prev) => {
+      const newCard: GrowthTrustCard = {
+        id: `gt-${Date.now()}`,
+        category: 'residential',
+        title: '새 서비스 안내 카드',
+        description: '고객 맞춤 시공 및 견적 안내 문구를 입력하세요.',
+        badge: 'NEW',
+        actionText: '자세히 보기 & 견적 알아보기',
+        features: ['전문 엔지니어 직접 시공', '책임 사후관리 A/S 보증'],
+      };
+      const updated = {
+        ...prev,
+        cards: [...(prev?.cards || []), newCard],
+      };
+      updateGrowthTrust(updated);
+      return updated;
+    });
+    triggerSaveToast();
+  };
+
+  const handleDeleteGrowthTrustCard = (cardId: string) => {
+    if ((growthTrustForm?.cards || []).length <= 1) {
+      alert('최소 1개 이상의 서비스 카드가 유지되어야 합니다.');
+      return;
+    }
+    if (!confirm('이 서비스 카드를 삭제하시겠습니까?')) return;
+    setGrowthTrustForm((prev) => {
+      const updated = {
+        ...prev,
+        cards: (prev?.cards || []).filter((c) => c.id !== cardId),
+      };
+      updateGrowthTrust(updated);
+      return updated;
+    });
+    triggerSaveToast();
+  };
+
+  const handleResetGrowthTrust = () => {
+    if (!confirm('소개 많은 회사 섹션을 초기 기본 문구로 복원하시겠습니까?')) return;
+    const defaultData = DEFAULT_SITE_DATA.growthTrust;
+    setGrowthTrustForm(defaultData);
+    updateGrowthTrust(defaultData);
+    triggerSaveToast();
   };
 
   const handleFileUpload = (
@@ -121,6 +200,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     reader.readAsDataURL(file);
   };
 
+  const handleSaveOnly = async () => {
+    await saveAllData({
+      company: companyForm,
+      settings: settingsForm,
+      afterService: asForm,
+      honestEstimate: estimateForm,
+      consultationSection: contactForm,
+      growthTrust: growthTrustForm,
+      ...(mottoForm ? { mottoSection: mottoForm } : {}),
+    });
+    triggerSaveToast();
+  };
+
+  const handleSaveAndClose = async () => {
+    await handleSaveOnly();
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
       <div
@@ -128,33 +225,44 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#0070d2] flex items-center justify-center text-white shadow-sm font-bold text-sm">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#0070d2] flex items-center justify-center text-white shadow-sm font-bold text-xs sm:text-sm">
               신
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <h2 className="text-sm sm:text-lg font-bold flex items-center gap-2">
                 <span>에어컨신 통합 관리자 센터</span>
-                <span className="text-[11px] bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded font-mono">
+                <span className="text-[10px] sm:text-[11px] bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded font-mono">
                   PW: {siteData.settings.adminPassword || '8849'}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
-                메뉴, 로고, 카카오톡 링크, 견적 문구, 사후관리, 문의하기, 하단정보 실시간 수정
+              <p className="hidden sm:block text-xs text-slate-400">
+                수정한 모든 컨텐츠는 실시간으로 홈페이지 전체에 연동 및 자동 저장됩니다
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             {saveToast && (
-              <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800 animate-fadeIn">
+              <span className="flex items-center gap-1 text-[11px] sm:text-xs text-emerald-400 font-bold bg-emerald-950/80 px-2.5 sm:px-3 py-1 rounded-full border border-emerald-800 animate-fadeIn">
                 <CheckCircle2 className="w-3.5 h-3.5" /> 저장 완료!
               </span>
             )}
+
             <button
-              onClick={onClose}
+              onClick={handleSaveOnly}
+              className="inline-flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#0070d2] hover:bg-[#005fb8] text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+              title="현재 수정한 내용 저장"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>저장하기</span>
+            </button>
+
+            <button
+              onClick={handleSaveAndClose}
               className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
+              title="저장 및 닫기"
             >
               <X className="w-5 h-5" />
             </button>
@@ -165,7 +273,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
         <div className="flex items-center px-4 bg-slate-100/80 border-b border-gray-200 overflow-x-auto text-xs sm:text-sm font-bold shrink-0">
           {[
             { key: 'menu', label: '메뉴 관리', icon: MenuIcon },
-            { key: 'growthTrust', label: '소개 많은 회사', icon: TrendingUp },
+            { key: 'growthTrust', label: '업계에서 가장 소개가 많은 회사', icon: TrendingUp },
             { key: 'motto', label: '유튜브/모토 영상', icon: Video },
             { key: 'estimate', label: '정직한 견적', icon: ShieldCheck },
             { key: 'as', label: '사후관리 (A/S)', icon: Wrench },
@@ -507,96 +615,276 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {/* TAB: 소개 많은 회사 (GROWTH & TRUST) */}
+          {/* TAB: 업계에서 가장 소개가 많은 회사 (GROWTH & TRUST) */}
           {activeTab === 'growthTrust' && (
             <div className="space-y-6">
-              <div className="bg-blue-50/80 p-4 rounded-2xl border border-blue-100 text-xs text-blue-900 leading-relaxed">
-                <strong>&apos;업계에서 가장 소개가 많은 회사&apos; 섹션 문구 관리:</strong> 상단 소제목(Kicker), 메인 타이틀, 서브 설명 문구 및 3가지 대표 서비스 안내 카드(주거용, 상업용, 공동구매)의 제목과 설명을 수정할 수 있습니다.
+              {/* Header Info Banner & Quick Action Buttons */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-5 rounded-2xl border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#0070d2]" />
+                    <strong className="text-sm text-blue-950">&apos;업계에서 가장 소개가 많은 회사&apos; 섹션 관리</strong>
+                  </div>
+                  <p className="text-xs text-blue-800/80 leading-relaxed">
+                    상단 소제목(Kicker), 메인 타이틀, 서브 설명 문구 및 주거용/상업용/공동구매 서비스 안내 카드의 모든 항목을 자유롭게 수정 및 추가·삭제할 수 있습니다.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleAddGrowthTrustCard}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#0070d2] text-white text-xs font-bold rounded-xl hover:bg-[#005fb8] transition-colors shadow-xs cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>카드 추가</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetGrowthTrust}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 text-xs font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                    title="초기 기본값으로 복원"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-gray-500" />
+                    <span>기본값 복원</span>
+                  </button>
+                </div>
               </div>
 
               {/* Title, Kicker & Description */}
               <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-xs space-y-4">
-                <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
-                  섹션 헤드라인 및 소개 문구
-                </h3>
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#0070d2]" />
+                    <span>섹션 헤드라인 및 소개 문구</span>
+                  </h3>
+                  <span className="text-[11px] text-[#0070d2] bg-blue-50 px-2 py-0.5 rounded-md font-semibold">
+                    실시간 반영 중
+                  </span>
+                </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">상단 소제목 (Kicker)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700">
+                      상단 소제목 (Kicker)
+                    </label>
+                    <span className="text-[10px] text-gray-400">기본값: 업계에서 가장 소개가 많은 회사</span>
+                  </div>
                   <input
                     type="text"
                     value={growthTrustForm?.kicker || ''}
-                    onChange={(e) => {
-                      setGrowthTrustForm((prev) => ({ ...prev, kicker: e.target.value }));
-                      updateGrowthTrust({ kicker: e.target.value });
-                      triggerSaveToast();
-                    }}
-                    className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                    onChange={(e) => handleUpdateGrowthTrustHeader('kicker', e.target.value)}
+                    placeholder="예: 업계에서 가장 소개가 많은 회사"
+                    className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2] text-[#0070d2] font-semibold"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">메인 타이틀</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700">
+                      메인 타이틀
+                    </label>
+                    <span className="text-[10px] text-gray-400">기본값: 본사는 고객의 신뢰와 함께 성장했습니다.</span>
+                  </div>
                   <input
                     type="text"
                     value={growthTrustForm?.title || ''}
-                    onChange={(e) => {
-                      setGrowthTrustForm((prev) => ({ ...prev, title: e.target.value }));
-                      updateGrowthTrust({ title: e.target.value });
-                      triggerSaveToast();
-                    }}
-                    className="w-full text-xs p-2.5 rounded-xl border border-gray-200 font-bold focus:outline-none focus:border-[#0070d2]"
+                    onChange={(e) => handleUpdateGrowthTrustHeader('title', e.target.value)}
+                    placeholder="예: 본사는 고객의 신뢰와 함께 성장했습니다."
+                    className="w-full text-xs sm:text-sm p-2.5 rounded-xl border border-gray-200 font-bold focus:outline-none focus:border-[#0070d2] text-gray-900"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">서브 설명 문구</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700">
+                      서브 설명 문구
+                    </label>
+                    <span className="text-[10px] text-gray-400">자세한 브랜드 소개 문구</span>
+                  </div>
                   <textarea
                     rows={2}
                     value={growthTrustForm?.description || ''}
-                    onChange={(e) => {
-                      setGrowthTrustForm((prev) => ({ ...prev, description: e.target.value }));
-                      updateGrowthTrust({ description: e.target.value });
-                      triggerSaveToast();
-                    }}
-                    className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                    onChange={(e) => handleUpdateGrowthTrustHeader('description', e.target.value)}
+                    placeholder="예: 믿고 맡겨주신 고객께서 만족하고 소개해주시며 고객과 함께 성장하는 것이 에어컨신의 자랑입니다."
+                    className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2] text-gray-700 leading-relaxed"
                   />
+                </div>
+
+                {/* Real-time Preview Pill */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 text-left">
+                  <div className="text-[11px] font-bold text-gray-400 mb-1">실시간 미리보기</div>
+                  <div className="text-xs font-bold text-[#0070d2]">
+                    {growthTrustForm?.kicker || '업계에서 가장 소개가 많은 회사'}
+                  </div>
+                  <div className="text-sm font-bold text-gray-900 mt-0.5">
+                    {growthTrustForm?.title || '본사는 고객의 신뢰와 함께 성장했습니다.'}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {growthTrustForm?.description || '소개 문구'}
+                  </div>
                 </div>
               </div>
 
-              {/* 3 Cards */}
+              {/* Service Cards Management */}
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-900">3가지 서비스 안내 카드</h3>
-                {(siteData.growthTrust?.cards || []).map((card, idx) => (
-                  <div key={card.id || idx} className="p-5 rounded-2xl bg-white border border-gray-200 shadow-xs space-y-3">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                      <span className="font-extrabold text-[#0070d2] text-xs">서비스 카드 #{idx + 1}</span>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">
+                      서비스 안내 카드 목록 ({growthTrustForm?.cards?.length || 0}개)
+                    </h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      각 카드의 제목, 설명, 카테고리(견적 연동), 배지 문구 및 특징 항목을 수정할 수 있습니다.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddGrowthTrustCard}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-[#0070d2] hover:bg-blue-100 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>새 카드 추가</span>
+                  </button>
+                </div>
+
+                {(growthTrustForm?.cards || []).map((card, idx) => (
+                  <div
+                    key={card.id || idx}
+                    className="p-5 rounded-2xl bg-white border border-gray-200 shadow-xs space-y-4 hover:border-blue-200 transition-colors"
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[#0070d2] text-white flex items-center justify-center text-[10px] font-extrabold">
+                          {idx + 1}
+                        </span>
+                        <span className="font-extrabold text-gray-900 text-xs sm:text-sm">
+                          {card.title || `서비스 카드 #${idx + 1}`}
+                        </span>
+                        {card.badge && (
+                          <span className="text-[10px] bg-blue-50 text-[#0070d2] border border-blue-200 px-2 py-0.5 rounded-full font-bold">
+                            {card.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGrowthTrustCard(card.id)}
+                          className="p-1.5 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                          title="이 카드 삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Title */}
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">카드 제목</label>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          카드 제목
+                        </label>
                         <input
                           type="text"
-                          value={card.title}
-                          onChange={(e) => {
-                            updateGrowthTrustCard(card.id, { title: e.target.value });
-                            triggerSaveToast();
-                          }}
-                          className="w-full text-xs p-2 rounded-xl border border-gray-200 font-bold focus:outline-none focus:border-[#0070d2]"
+                          value={card.title || ''}
+                          onChange={(e) => handleUpdateGrowthTrustCard(card.id, { title: e.target.value })}
+                          placeholder="예: 주거용 시스템 에어컨"
+                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 font-bold focus:outline-none focus:border-[#0070d2]"
                         />
                       </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">카드 설명 문구</label>
+
+                      {/* Category & Badge */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            견적 카테고리 연동
+                          </label>
+                          <select
+                            value={card.category || 'residential'}
+                            onChange={(e) => handleUpdateGrowthTrustCard(card.id, { category: e.target.value })}
+                            className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:border-[#0070d2]"
+                          >
+                            <option value="residential">주거용 (residential)</option>
+                            <option value="commercial">상업용 (commercial)</option>
+                            <option value="group">공동구매 (group)</option>
+                            <option value="custom">기타 맞춤 (custom)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            배지 태그 (선택)
+                          </label>
+                          <input
+                            type="text"
+                            value={card.badge || ''}
+                            onChange={(e) => handleUpdateGrowthTrustCard(card.id, { badge: e.target.value })}
+                            placeholder="예: 추천, 인기"
+                            className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          카드 설명 문구
+                        </label>
                         <input
                           type="text"
-                          value={card.description}
-                          onChange={(e) => {
-                            updateGrowthTrustCard(card.id, { description: e.target.value });
-                            triggerSaveToast();
-                          }}
-                          className="w-full text-xs p-2 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                          value={card.description || ''}
+                          onChange={(e) => handleUpdateGrowthTrustCard(card.id, { description: e.target.value })}
+                          placeholder="예: 주거용 시공공사 전문, 노후 제품 교체공사 전문"
+                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                        />
+                      </div>
+
+                      {/* Action Button Text */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          하단 액션 버튼 문구
+                        </label>
+                        <input
+                          type="text"
+                          value={card.actionText || '자세히 보기 & 견적 알아보기'}
+                          onChange={(e) => handleUpdateGrowthTrustCard(card.id, { actionText: e.target.value })}
+                          placeholder="기본값: 자세히 보기 & 견적 알아보기"
+                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
+                        />
+                      </div>
+
+                      {/* Features Bullet Points */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          주요 특징 항목 (쉼표(,)로 구분)
+                        </label>
+                        <input
+                          type="text"
+                          value={(card.features || []).join(', ')}
+                          onChange={(e) =>
+                            handleUpdateGrowthTrustCard(card.id, {
+                              features: e.target.value
+                                .split(',')
+                                .map((s) => s.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          placeholder="예: 아파트 신축 시공, 천장 단내림, 노후 교체"
+                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0070d2]"
                         />
                       </div>
                     </div>
                   </div>
                 ))}
+
+                {/* Bottom Add Card Button */}
+                <button
+                  type="button"
+                  onClick={handleAddGrowthTrustCard}
+                  className="w-full py-3.5 border-2 border-dashed border-gray-300 hover:border-[#0070d2] text-gray-600 hover:text-[#0070d2] rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer bg-white"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>새 서비스 카드 추가하기</span>
+                </button>
               </div>
             </div>
           )}
@@ -1540,13 +1828,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
             <span>초기값 복원</span>
           </button>
 
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-[#0070d2] hover:bg-[#005fb8] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5"
-          >
-            <Save className="w-4 h-4" />
-            <span>저장 및 닫기</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSaveOnly}
+              className="px-4 sm:px-5 py-2.5 bg-white border border-blue-200 text-[#0070d2] hover:bg-blue-50 rounded-xl text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              <span>저장하기</span>
+            </button>
+            <button
+              onClick={handleSaveAndClose}
+              className="px-5 sm:px-6 py-2.5 bg-[#0070d2] hover:bg-[#005fb8] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-colors active:scale-95"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>저장 및 닫기</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

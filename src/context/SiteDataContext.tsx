@@ -14,7 +14,6 @@ import {
   ConsultationSectionData,
   GrowthTrustData,
   GrowthTrustCard,
-  EnterpriseAirData,
   MottoSectionData,
 } from '../types/siteData.ts';
 
@@ -223,25 +222,6 @@ export const DEFAULT_SITE_DATA: SiteData = {
       },
     ],
   },
-  enterpriseAir: {
-    kicker: 'LG전자 우수파트너사, 삼성전자 우수 SFA 선정',
-    title: '대기업도 인정한 에어컨신',
-    paragraph1: '저희 에어컨신은 업계 최고의 기술력과 신뢰를 바탕으로, 국내 2대 대기업인 LG전자와 삼성전자로부터 그 우수성을 인정받아 왔습니다.',
-    paragraph2: 'LG전자의 우수 파트너사로서 인정받았을 뿐만 아니라, 삼성전자로부터도 우수 SFA로 선정되어 뛰어난 시공 품질과 서비스를 제공하고 있습니다. 저희 에어컨신은 고객에게 최고의 만족을 드리기 위해 지속적인 품질 관리와 혁신을 추구하고 있습니다.',
-    tag1: 'LG전자 정품 배관 자재 원칙',
-    tag2: '삼성 스마트 싱스 연동 감리',
-    plaque1Title: '우수 파트너점',
-    plaque1Text: '귀하는 LG전자 시스템에어컨 품질 표준 및 고객 만족 최우수 시공점으로 선정되었기에 본 패를 수여합니다.',
-    plaque2Title: '우수 SFA 인증서',
-    plaque2Text: '당사 프리미엄 시스템에어컨 설치 및 서비스 전문 대리점으로서 최상의 품질과 시공 기술력을 공식 인증합니다.',
-    solutionKicker: '믿을 수 있는 공기 전문가',
-    solutionTitle: '깨끗하고 신선한 실내 공기를 위한 솔루션',
-    solutionDesc: '저희 에어컨신은 철저한 선별 과정을 거친 최상의 제품만을 제공합니다.',
-    feature1Title: '미세먼지 청정 극세 필터 공기질 케어',
-    feature1Desc: '초미세먼지 99.9% 집진 및 공기 정화 모듈 완벽 세팅',
-    feature2Title: '배관 진공 작업 및 고압 누설 테스트 100%',
-    feature2Desc: '0.5Torr 이하 완벽 진공도 유지로 냉각 효율 및 압축기 수명 극대화',
-  },
   mottoSection: {
     dashMotif: '----',
     title: '정직한 시공으로 오로지 고객을 남기겠습니다.',
@@ -321,7 +301,6 @@ interface SiteDataContextType {
   updateAfterService: (afterService: Partial<AfterServiceData>) => void;
   updateGrowthTrust: (growthTrust: Partial<GrowthTrustData>) => void;
   updateGrowthTrustCard: (id: string, card: Partial<GrowthTrustCard>) => void;
-  updateEnterpriseAir: (enterpriseAir: Partial<EnterpriseAirData>) => void;
   updateMottoSection: (motto: Partial<MottoSectionData>) => void;
   updateHonestEstimate: (honestEstimate: Partial<HonestEstimateData>) => void;
   updateHonestEstimateItem: (id: string, item: Partial<HonestEstimateItem>) => void;
@@ -329,11 +308,14 @@ interface SiteDataContextType {
   addInquiry: (inquiry: Omit<ConsultationInquiry, 'id' | 'date'>) => void;
   deleteInquiry: (id: string) => void;
   resetToDefaults: () => void;
+  saveAllData: (partial?: Partial<SiteData>) => Promise<boolean>;
 }
 
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
 
 export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isInitialSyncDone = React.useRef(false);
+
   const [siteData, setSiteData] = useState<SiteData>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -351,9 +333,9 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                   ...DEFAULT_SITE_DATA.heroSlides[idx],
                   ...slide,
                   imageUrl:
-                    slide.imageUrl ||
-                    DEFAULT_SITE_DATA.heroSlides[idx]?.imageUrl ||
-                    '',
+                    slide.imageUrl !== undefined
+                      ? slide.imageUrl
+                      : (DEFAULT_SITE_DATA.heroSlides[idx]?.imageUrl || ''),
                 }))
               : DEFAULT_SITE_DATA.heroSlides,
           stats: parsed.stats && parsed.stats.length > 0 ? parsed.stats : DEFAULT_SITE_DATA.stats,
@@ -362,17 +344,14 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ...DEFAULT_SITE_DATA.afterService,
             ...parsed.afterService,
             centerImageUrl:
-              parsed.afterService?.centerImageUrl ||
-              DEFAULT_SITE_DATA.afterService.centerImageUrl,
+              parsed.afterService?.centerImageUrl !== undefined
+                ? parsed.afterService.centerImageUrl
+                : DEFAULT_SITE_DATA.afterService.centerImageUrl,
           },
           growthTrust: {
             ...DEFAULT_SITE_DATA.growthTrust,
             ...(parsed.growthTrust || {}),
             cards: parsed.growthTrust?.cards || DEFAULT_SITE_DATA.growthTrust.cards,
-          },
-          enterpriseAir: {
-            ...DEFAULT_SITE_DATA.enterpriseAir,
-            ...(parsed.enterpriseAir || {}),
           },
           mottoSection: {
             ...DEFAULT_SITE_DATA.mottoSection,
@@ -396,12 +375,113 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_SITE_DATA;
   });
 
+  // Fetch persistent server-stored data on initial mount (enables cross-device sync like mobile)
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/site-data')
+      .then(async (res) => {
+        if (res.ok) {
+          const ct = res.headers.get('content-type');
+          if (ct && ct.includes('application/json')) {
+            const data = await res.json();
+            if (data && typeof data === 'object' && isMounted) {
+              setSiteData((prev) => {
+                const merged: SiteData = {
+                  ...DEFAULT_SITE_DATA,
+                  ...data,
+                  company: { ...DEFAULT_SITE_DATA.company, ...(data.company || {}) },
+                  settings: { ...DEFAULT_SITE_DATA.settings, ...(data.settings || {}) },
+                  navMenu: data.navMenu && data.navMenu.length > 0 ? data.navMenu : prev.navMenu,
+                  heroSlides:
+                    data.heroSlides && data.heroSlides.length > 0
+                      ? data.heroSlides
+                      : prev.heroSlides,
+                  stats: data.stats && data.stats.length > 0 ? data.stats : prev.stats,
+                  reviews: data.reviews && data.reviews.length > 0 ? data.reviews : prev.reviews,
+                  afterService: {
+                    ...DEFAULT_SITE_DATA.afterService,
+                    ...(data.afterService || {}),
+                  },
+                  growthTrust: {
+                    ...DEFAULT_SITE_DATA.growthTrust,
+                    ...(data.growthTrust || {}),
+                  },
+                  mottoSection: {
+                    ...DEFAULT_SITE_DATA.mottoSection,
+                    ...(data.mottoSection || {}),
+                  },
+                  honestEstimate: {
+                    ...DEFAULT_SITE_DATA.honestEstimate,
+                    ...(data.honestEstimate || {}),
+                  },
+                  consultationSection: {
+                    ...DEFAULT_SITE_DATA.consultationSection,
+                    ...(data.consultationSection || {}),
+                  },
+                  inquiries: data.inquiries || prev.inquiries || [],
+                };
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                } catch (e) {}
+                return merged;
+              });
+            }
+          }
+        } else if (res.status === 404) {
+          // If server file doesn't exist yet, push current local data to initialize server storage
+          const local = localStorage.getItem(STORAGE_KEY);
+          const dataToPush = local ? JSON.parse(local) : siteData;
+          fetch('/api/site-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToPush),
+          }).catch(() => {});
+        }
+      })
+      .catch((err) => {
+        console.info('Server sync running in local mode:', err);
+      })
+      .finally(() => {
+        isInitialSyncDone.current = true;
+      });
+
+    // Listen to storage events for real-time synchronization across multiple browser tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          setSiteData(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Save changes to localStorage and send update to backend API server
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
     } catch (e) {
       console.warn('Failed to save site data to localStorage', e);
     }
+
+    // Don't auto-send defaults to server before initial fetch completes
+    if (!isInitialSyncDone.current) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/site-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(siteData),
+      }).catch((err) => {
+        console.warn('Failed to sync to backend /api/site-data:', err);
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [siteData]);
 
   const updateCompany = (company: Partial<CompanyInfo>) => {
@@ -493,16 +573,6 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
-  const updateEnterpriseAir = (data: Partial<EnterpriseAirData>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      enterpriseAir: {
-        ...(prev.enterpriseAir || DEFAULT_SITE_DATA.enterpriseAir!),
-        ...data,
-      },
-    }));
-  };
-
   const updateMottoSection = (data: Partial<MottoSectionData>) => {
     setSiteData((prev) => ({
       ...prev,
@@ -566,6 +636,28 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (e) {
       console.warn(e);
     }
+    fetch('/api/site-data/reset', { method: 'POST' }).catch(() => {});
+  };
+
+  const saveAllData = async (partial?: Partial<SiteData>): Promise<boolean> => {
+    const updated: SiteData = partial ? { ...siteData, ...partial } : siteData;
+    setSiteData(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
+    try {
+      const res = await fetch('/api/site-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('Backend /api/site-data save error:', err);
+      return false;
+    }
   };
 
   return (
@@ -585,7 +677,6 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateAfterService,
         updateGrowthTrust,
         updateGrowthTrustCard,
-        updateEnterpriseAir,
         updateMottoSection,
         updateHonestEstimate,
         updateHonestEstimateItem,
@@ -593,6 +684,7 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addInquiry,
         deleteInquiry,
         resetToDefaults,
+        saveAllData,
       }}
     >
       {children}

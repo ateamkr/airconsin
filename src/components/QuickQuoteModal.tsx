@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Calculator, Check, ArrowRight } from 'lucide-react';
+import { useSiteData } from '../context/SiteDataContext.tsx';
 
 interface QuickQuoteModalProps {
   onClose: () => void;
@@ -10,6 +11,9 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
   onClose,
   onApplyQuote,
 }) => {
+  const { siteData } = useSiteData();
+  const brandName = siteData?.company?.brandName || '에어컨신';
+
   const [spaceType, setSpaceType] = useState<'apartment' | 'commercial' | 'replace'>('apartment');
   const [brand, setBrand] = useState<'lg' | 'samsung'>('lg');
   const [unitCount, setUnitCount] = useState<number>(4);
@@ -40,7 +44,7 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
     const ceilingLabel =
       ceilingType === 'new' ? '입주 전 신축' : ceilingType === 'occupied' ? '거주 중 시공' : '인테리어 공사 병행';
 
-    const summary = `[에어컨신 간편견적] ${spaceLabel} / ${brandLabel} / ${unitCount}대 / ${ceilingLabel} (예상 견적: ${min}~${max}만 원)`;
+    const summary = `[${brandName} 간편견적] ${spaceLabel} / ${brandLabel} / ${unitCount}대 / ${ceilingLabel} (예상 견적: ${min}~${max}만 원)`;
     onApplyQuote(summary);
     onClose();
   };
@@ -61,7 +65,7 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold">에어컨신 간편견적센터</h3>
+              <h3 className="text-base sm:text-lg font-bold">{brandName} 간편견적센터</h3>
               <p className="text-[11px] sm:text-xs text-blue-100">조건을 선택하시면 실시간 표준 견적이 산출됩니다</p>
             </div>
           </div>

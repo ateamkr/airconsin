@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { Award, CheckCircle2, ZoomIn } from 'lucide-react';
+import { useSiteData } from '../context/SiteDataContext.tsx';
 
 export const SpecialReasonSection: React.FC = () => {
+  const { siteData } = useSiteData();
   const [selectedCert, setSelectedCert] = useState<number>(0);
   const [previewModal, setPreviewModal] = useState<string | null>(null);
+
+  const ceoName = siteData?.company?.ceo || '문필주';
+  const brandName = siteData?.company?.brandName || '에어컨신';
 
   const certList = [
     {
@@ -30,10 +35,10 @@ export const SpecialReasonSection: React.FC = () => {
           {/* Left Column: Text & Credential Links */}
           <div className="lg:col-span-6 flex flex-col justify-center">
             <span className="text-xs sm:text-sm font-bold text-[#0070d2]">
-              왜, 에어컨신이어야 하나요?
+              왜, {brandName}이어야 하나요?
             </span>
             <h2 className="text-xl sm:text-3xl md:text-[34px] font-bold text-gray-900 mt-1.5 sm:mt-2 tracking-tight break-keep">
-              에어컨신이 특별한 이유!
+              {brandName}이 특별한 이유!
             </h2>
 
             <div className="mt-4 sm:mt-6 space-y-1">
@@ -44,7 +49,7 @@ export const SpecialReasonSection: React.FC = () => {
                 20년 이상의 시스템 에어컨 주거 및 상업공간 전문 업체
               </p>
               <p className="text-xs sm:text-[13px] text-gray-500 font-normal leading-relaxed pt-2 break-keep">
-                저희 에어컨신은 20년 이상의 경험을 바탕으로, 주거 및 상업 공간에
+                저희 {brandName}은 20년 이상의 경험을 바탕으로, 주거 및 상업 공간에
                 특화된 시스템 에어컨 설치와 유지 보수 서비스를 제공하는 에어컨 시공 전문 업체입니다.
               </p>
             </div>
@@ -114,7 +119,7 @@ export const SpecialReasonSection: React.FC = () => {
 
                     {/* Certificate Body */}
                     <div className="my-2.5 text-[9px] sm:text-[8px] text-gray-600 leading-normal space-y-0.5">
-                      <p className="font-semibold text-gray-800">성 명 : 문 필 주</p>
+                      <p className="font-semibold text-gray-800">성 명 : {ceoName}</p>
                       <p>자격번호 : SAC-2015-KO-0418</p>
                       <p className="pt-1 text-[8px] sm:text-[6.5px] text-gray-500 break-keep">
                         위 사람은 당사 설치기준에 적합한 SAC 설치 엔지니어 전문가 교육과정을 이수하였기에 본 수료증을 수여함.
@@ -161,8 +166,8 @@ export const SpecialReasonSection: React.FC = () => {
 
                     {/* Certificate Body */}
                     <div className="my-2.5 text-[9px] sm:text-[8px] text-gray-600 leading-normal space-y-0.5">
-                      <p className="font-semibold text-gray-800">소 속 : 에어컨신</p>
-                      <p className="text-gray-700">성 명 : 문 필 주</p>
+                      <p className="font-semibold text-gray-800">소 속 : {brandName}</p>
+                      <p className="text-gray-700">성 명 : {ceoName}</p>
                       <p>과 정 : MULTI V 시스템에어컨</p>
                       <p className="pt-1 text-[8px] sm:text-[6.5px] text-gray-500 break-keep">
                         귀하는 LG전자 시스템에어컨 시공 및 감리 기술교육 전 과정을 우수한 성적으로 수료하였으므로 이를 증명함.

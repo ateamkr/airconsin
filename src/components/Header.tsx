@@ -18,16 +18,17 @@ export const Header: React.FC<HeaderProps> = ({
   // Filter enabled menu items from admin settings
   const navLinks = (siteData.navMenu || []).filter((item) => item.enabled);
 
-  // Quick navigation items for mobile scrollable tab bar
-  const quickNavTabs = [
-    { label: '간편견적', action: onOpenQuoteModal, isModal: true, icon: Calculator },
-    { label: '브랜드스토리', target: 'brand-story', icon: BookOpen },
-    { label: '시공자격', target: 'credentials', icon: Award },
-    { label: '시공사례', target: 'portfolio', icon: ShieldCheck },
-    { label: '설치후기', target: 'reviews', icon: Star },
-    { label: '사후관리(A/S)', target: 'after-service', icon: Wrench },
-    { label: '무료상담', target: 'contact', icon: Send },
-  ];
+  // Helper to map icons for navigation items
+  const getNavIcon = (item: { label: string; target: string; type: string }) => {
+    if (item.type === 'modal' || item.label.includes('견적')) return Calculator;
+    if (item.target.includes('story') || item.label.includes('스토리')) return BookOpen;
+    if (item.target.includes('cred') || item.label.includes('자격')) return Award;
+    if (item.target.includes('port') || item.label.includes('사례')) return ShieldCheck;
+    if (item.target.includes('rev') || item.label.includes('후기')) return Star;
+    if (item.target.includes('after') || item.label.includes('사후') || item.label.includes('A/S')) return Wrench;
+    if (item.target.includes('contact') || item.label.includes('문의')) return Send;
+    return BookOpen;
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
@@ -121,30 +122,44 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Horizontal Quick Navigation Bar (Ensures mobile users see all same sections instantly) */}
+      {/* Mobile Horizontal Quick Navigation Bar (Dynamically reflects admin-configured navMenu) */}
       <div className="xl:hidden border-t border-gray-100 bg-slate-50/70 overflow-x-auto no-scrollbar py-2 px-3 flex items-center gap-1.5 scroll-smooth">
-        {quickNavTabs.map((tab, idx) => {
-          const Icon = tab.icon;
-          if (tab.isModal) {
+        {navLinks.map((item) => {
+          const Icon = getNavIcon(item);
+          if (item.type === 'modal') {
             return (
               <button
-                key={idx}
-                onClick={tab.action}
-                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100/70 text-[#0070d2] font-bold text-[11px] border border-blue-200 hover:bg-blue-200/60 transition-colors whitespace-nowrap active:scale-95"
+                key={item.id}
+                onClick={onOpenQuoteModal}
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100/70 text-[#0070d2] font-bold text-[11px] border border-blue-200 hover:bg-blue-200/60 transition-colors whitespace-nowrap active:scale-95 cursor-pointer"
               >
                 <Icon className="w-3 h-3" />
-                <span>{tab.label}</span>
+                <span>{item.label}</span>
               </button>
+            );
+          }
+          if (item.type === 'external') {
+            return (
+              <a
+                key={item.id}
+                href={item.target}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white text-gray-700 font-medium text-[11px] border border-gray-200 hover:border-[#0070d2] hover:text-[#0070d2] transition-colors whitespace-nowrap active:scale-95 cursor-pointer"
+              >
+                <Icon className="w-3 h-3 text-gray-500" />
+                <span>{item.label}</span>
+              </a>
             );
           }
           return (
             <button
-              key={idx}
-              onClick={() => onNavigateSection(tab.target!)}
-              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white text-gray-700 font-medium text-[11px] border border-gray-200 hover:border-[#0070d2] hover:text-[#0070d2] transition-colors whitespace-nowrap active:scale-95"
+              key={item.id}
+              onClick={() => onNavigateSection(item.target)}
+              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white text-gray-700 font-medium text-[11px] border border-gray-200 hover:border-[#0070d2] hover:text-[#0070d2] transition-colors whitespace-nowrap active:scale-95 cursor-pointer"
             >
               <Icon className="w-3 h-3 text-gray-500" />
-              <span>{tab.label}</span>
+              <span>{item.label}</span>
             </button>
           );
         })}

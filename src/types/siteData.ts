@@ -81,6 +81,8 @@ export interface GrowthTrustCard {
   title: string;
   description: string;
   features?: string[];
+  badge?: string;
+  actionText?: string;
 }
 
 export interface GrowthTrustData {
@@ -88,26 +90,6 @@ export interface GrowthTrustData {
   title: string;
   description: string;
   cards: GrowthTrustCard[];
-}
-
-export interface EnterpriseAirData {
-  kicker: string;
-  title: string;
-  paragraph1: string;
-  paragraph2: string;
-  tag1: string;
-  tag2: string;
-  plaque1Title: string;
-  plaque1Text: string;
-  plaque2Title: string;
-  plaque2Text: string;
-  solutionKicker: string;
-  solutionTitle: string;
-  solutionDesc: string;
-  feature1Title: string;
-  feature1Desc: string;
-  feature2Title: string;
-  feature2Desc: string;
 }
 
 export interface MottoSectionData {
@@ -150,7 +132,6 @@ export interface SiteData {
   reviews: ReviewItem[];
   afterService: AfterServiceData;
   growthTrust: GrowthTrustData;
-  enterpriseAir?: EnterpriseAirData;
   mottoSection?: MottoSectionData;
   honestEstimate: HonestEstimateData;
   consultationSection: ConsultationSectionData;

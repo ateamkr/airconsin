@@ -31,8 +31,10 @@ export const FloatingKakao: React.FC<FloatingKakaoProps> = () => {
 
       {/* KakaoTalk Floating Button - Direct New Window Link */}
       <div className="relative group">
-        <button
-          onClick={handleKakaoClick}
+        <a
+          href={kakaoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           aria-label="카카오톡 1:1 상담 (새 창 열림)"
           className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#FEE500] hover:bg-[#fedb00] active:scale-95 text-[#371D1E] shadow-xl hover:shadow-2xl flex flex-col items-center justify-center transition-all duration-300 cursor-pointer relative"
         >
@@ -52,7 +54,7 @@ export const FloatingKakao: React.FC<FloatingKakaoProps> = () => {
 
           {/* Pulse notification dot */}
           <span className="absolute top-1 right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
-        </button>
+        </a>
 
         {/* Hover Tooltip showing external link info */}
         <div className="absolute right-16 top-1/2 -translate-y-1/2 whitespace-nowrap bg-gray-900/95 backdrop-blur-xs text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden sm:flex items-center gap-1.5 shadow-lg">

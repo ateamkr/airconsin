@@ -1,7 +1,12 @@
 import React from 'react';
 import { Wind, Sparkles, CheckCircle } from 'lucide-react';
+import { useSiteData } from '../context/SiteDataContext.tsx';
 
 export const EnterpriseAirSection: React.FC = () => {
+  const { siteData } = useSiteData();
+  const brandName = siteData?.company?.brandName || '에어컨신 (airconSIN)';
+  const ceoName = siteData?.company?.ceo || '문필주';
+
   return (
     <section className="w-full bg-white py-12 sm:py-16 md:py-24 border-t border-gray-100">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 space-y-16 sm:space-y-20 md:space-y-28">
@@ -28,8 +33,8 @@ export const EnterpriseAirSection: React.FC = () => {
                   </div>
 
                   <div className="text-center my-2 text-[9px] sm:text-[8px] text-slate-300 space-y-1">
-                    <p className="font-semibold text-white">상호: 에어컨신 (airconSIN)</p>
-                    <p className="text-amber-200">대표: 문필주</p>
+                    <p className="font-semibold text-white">상호: {brandName}</p>
+                    <p className="text-amber-200">대표: {ceoName}</p>
                     <p className="text-[8.5px] sm:text-[6.5px] text-slate-400 break-keep">
                       귀하는 LG전자 시스템에어컨 품질 표준 및 고객 만족 최우수 시공점으로 선정되었기에 본 패를 수여합니다.
                     </p>
@@ -54,8 +59,8 @@ export const EnterpriseAirSection: React.FC = () => {
                   </div>
 
                   <div className="text-center my-2 text-[9px] sm:text-[8px] text-amber-200/90 space-y-1">
-                    <p className="font-semibold text-white">상호: 에어컨신</p>
-                    <p className="text-amber-200">대표: 문필주</p>
+                    <p className="font-semibold text-white">상호: {brandName}</p>
+                    <p className="text-amber-200">대표: {ceoName}</p>
                     <p className="text-[8.5px] sm:text-[6.5px] text-amber-300/80 break-keep">
                       당사 프리미엄 시스템에어컨 설치 및 서비스 전문 대리점으로서 최상의 품질과 시공 기술력을 공식 인증합니다.
                     </p>
@@ -82,17 +87,17 @@ export const EnterpriseAirSection: React.FC = () => {
               LG전자 우수파트너사, 삼성전자 우수 SFA 선정
             </span>
             <h3 className="text-xl sm:text-3xl font-bold text-gray-900 mt-1.5 sm:mt-2 tracking-tight break-keep">
-              대기업도 인정한 에어컨신
+              대기업도 인정한 {brandName}
             </h3>
 
             <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-normal break-keep">
               <p>
-                저희 에어컨신은 업계 최고의 기술력과 신뢰를 바탕으로, 국내 2대 대기업인
+                저희 {brandName}은 업계 최고의 기술력과 신뢰를 바탕으로, 국내 2대 대기업인
                 LG전자와 삼성전자로부터 그 우수성을 인정받아 왔습니다.
               </p>
               <p>
                 LG전자의 우수 파트너사로서 인정받았을 뿐만 아니라, 삼성전자로부터도 우수 SFA로 선정되어
-                뛰어난 시공 품질과 서비스를 제공하고 있습니다. 저희 에어컨신은 고객에게
+                뛰어난 시공 품질과 서비스를 제공하고 있습니다. 저희 {brandName}은 고객에게
                 최고의 만족을 드리기 위해 지속적인 품질 관리와 혁신을 추구하고 있습니다.
               </p>
             </div>
@@ -120,7 +125,7 @@ export const EnterpriseAirSection: React.FC = () => {
             </h3>
 
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-normal break-keep">
-              저희 에어컨신은 철저한 선별 과정을 거친 최상의 제품만을 제공합니다.
+              저희 {brandName}은 철저한 선별 과정을 거친 최상의 제품만을 제공합니다.
             </p>
 
             <div className="mt-5 sm:mt-6 space-y-3">

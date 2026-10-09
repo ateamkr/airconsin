@@ -77,12 +77,14 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               </li>
               <li>
-                <button
-                  onClick={onOpenKakaoChat}
+                <a
+                  href={siteData.settings.kakaoChannelUrl || 'https://pf.kakao.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
                 >
                   카카오 채널
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -102,12 +104,14 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               </li>
               <li>
-                <button
-                  onClick={onOpenKakaoChat}
+                <a
+                  href={siteData.settings.kakaoChannelUrl || 'https://pf.kakao.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
                 >
                   카카오톡 문의하기
-                </button>
+                </a>
               </li>
               <li>
                 <button
@@ -120,60 +124,52 @@ export const Footer: React.FC<FooterProps> = ({
             </ul>
           </div>
 
-          {/* Column 4: 페이지 바로가기 */}
+          {/* Column 4: 페이지 바로가기 (관리자 메뉴 연동) */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">
               페이지 바로가기
             </h4>
             <ul className="space-y-2 text-xs text-gray-500">
-              <li>
-                <button
-                  onClick={() => onNavigateSection('brand-story')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
-                >
-                  브랜드 스토리
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('credentials')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
-                >
-                  시공자격증
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('portfolio')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
-                >
-                  시공사례
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('reviews')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer text-[#0070d2] font-medium inline-block py-0.5"
-                >
-                  설치후기
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('after-service')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer text-[#0070d2] font-medium inline-block py-0.5"
-                >
-                  사후관리 (A/S)
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('contact')}
-                  className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
-                >
-                  문의 하기
-                </button>
-              </li>
+              {(siteData.navMenu || [])
+                .filter((item) => item.enabled)
+                .map((item) => {
+                  if (item.type === 'modal') {
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={onOpenQuoteModal}
+                          className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  }
+                  if (item.type === 'external') {
+                    return (
+                      <li key={item.id}>
+                        <a
+                          href={item.target}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-[#0070d2] transition-colors inline-block py-0.5"
+                        >
+                          {item.label}
+                        </a>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={item.id}>
+                      <button
+                        onClick={() => onNavigateSection(item.target)}
+                        className="hover:text-[#0070d2] transition-colors text-left cursor-pointer inline-block py-0.5"
+                      >
+                        {item.label}
+                      </button>
+                    </li>
+                  );
+                })}
             </ul>
           </div>
 
