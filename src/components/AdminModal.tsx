@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useSiteData, DEFAULT_SITE_DATA } from '../context/SiteDataContext.tsx';
 import { GrowthTrustCard, GrowthTrustData, SiteData } from '../types/siteData.ts';
+import { uploadOrCompressImage } from '../utils/imageCompressor.ts';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -39,6 +40,9 @@ interface AdminModalProps {
 export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
   const {
     siteData,
+    adminToken,
+    hasDraft,
+    inquiries,
     updateCompany,
     updateSettings,
     updateNavMenu,
@@ -58,6 +62,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     deleteInquiry,
     resetToDefaults,
     saveAllData,
+    restoreDraft,
+    discardDraft,
   } = useSiteData();
 
   const [activeTab, setActiveTab] = useState<
@@ -181,26 +187,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     triggerSaveToast();
   };
 
-  const handleFileUpload = (
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (dataUrl: string) => void
+    onSuccess: (urlOrDataUrl: string) => void,
+    isLogo = false
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('이미지 파일 크기는 3MB 이하여야 합니다.');
-      return;
+    try {
+      const result = await uploadOrCompressImage(file, adminToken, {
+        maxWidth: isLogo ? 800 : 1200,
+        maxHeight: isLogo ? 800 : 1200,
+        quality: 0.85,
+      });
+      onSuccess(result);
+      triggerSaveToast();
+    } catch (err: any) {
+      alert(err?.message || '이미지 처리에 실패했습니다.');
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (typeof event.target?.result === 'string') {
-        onSuccess(event.target.result);
-        triggerSaveToast();
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSaveOnly = async (): Promise<boolean> => {
@@ -220,15 +225,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
       updatedAt: Date.now(),
     };
 
-    const success = await saveAllData(fullPayload);
+    const res = await saveAllData(fullPayload);
     setIsSaving(false);
-    if (success) {
+    if (res.success) {
       setLastSavedTime(new Date().toLocaleTimeString('ko-KR'));
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 3000);
       return true;
     } else {
-      alert('서버 저장에 실패했습니다. 네트워크 상태를 확인하시거나 잠시 후 다시 시도해 주세요.');
+      alert(res.error || '서버 저장에 실패했습니다. 네트워크 상태를 확인하시거나 잠시 후 다시 시도해 주세요.');
       return false;
     }
   };
@@ -255,12 +260,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
             <div>
               <h2 className="text-sm sm:text-lg font-bold flex items-center gap-2">
                 <span>에어컨신 통합 관리자 센터</span>
-                <span className="text-[10px] sm:text-[11px] bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded font-mono">
-                  PW: {siteData.settings.adminPassword || '8849'}
+                <span className="text-[10px] sm:text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> 보안 세션 인증됨
                 </span>
               </h2>
               <p className="hidden sm:block text-xs text-slate-400">
-                수정한 모든 컨텐츠는 실시간으로 홈페이지 전체에 연동 및 서버에 영구 저장됩니다
+                수정한 모든 컨텐츠는 실시간으로 홈페이지 전체에 연동 및 Netlify 영구 저장소에 저장됩니다
               </p>
             </div>
           </div>
@@ -311,6 +316,38 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
+        {/* Draft Recovery Banner */}
+        {hasDraft && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900 shrink-0 animate-fadeIn">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <strong>로컬 미저장 초안 보관 중:</strong> 이전 편집 내용이 브라우저에 임시 보관되어 있습니다.
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (restoreDraft()) {
+                    alert('보관된 로컬 초안을 성공적으로 불러왔습니다. 확인 후 상단 [저장하기]를 누르면 서버에 영구 반영됩니다.');
+                  }
+                }}
+                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition-colors cursor-pointer text-xs"
+              >
+                초안 불러오기
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('저장되지 않은 로컬 초안을 삭제하시겠습니까?')) {
+                    discardDraft();
+                  }
+                }}
+                className="px-2 py-1 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer text-xs"
+              >
+                초안 삭제
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className="flex items-center px-4 bg-slate-100/80 border-b border-gray-200 overflow-x-auto text-xs sm:text-sm font-bold shrink-0">
           {[
@@ -325,7 +362,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
             { key: 'reviews', label: '설치후기 (6개)', icon: MessageSquare },
             { key: 'settings', label: '로고/이메일/카카오', icon: Mail },
             { key: 'company', label: '하단 정보 / 회사', icon: Building },
-            { key: 'inbox', label: `상담접수함 (${siteData.inquiries?.length || 0})`, icon: Inbox },
+            { key: 'inbox', label: `상담접수함 (${inquiries?.length || 0})`, icon: Inbox },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -572,23 +609,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* 4. 관리자 비밀번호 변경 */}
+              {/* 4. 관리자 비밀번호 보안 설정 안내 */}
               <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-xs space-y-3">
                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 border-b border-gray-100 pb-2">
-                  <KeyRound className="w-4 h-4 text-[#0070d2]" />
-                  <span>관리자 로그인 비밀번호 (기본: 8849)</span>
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>서버 보안 인증 관리 (Netlify ADMIN_PASSWORD)</span>
                 </h3>
-                <div className="max-w-xs">
-                  <input
-                    type="text"
-                    value={settingsForm.adminPassword || '8849'}
-                    onChange={(e) => {
-                      setSettingsForm((prev) => ({ ...prev, adminPassword: e.target.value }));
-                      updateSettings({ adminPassword: e.target.value });
-                      triggerSaveToast();
-                    }}
-                    className="w-full text-xs p-3 rounded-xl border border-gray-200 font-mono font-bold tracking-widest text-center focus:outline-none"
-                  />
+                <div className="text-xs text-gray-600 space-y-2 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <p className="flex items-center gap-1.5 font-bold text-gray-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>서버 보안 환경변수 검증 적용 완료</span>
+                  </p>
+                  <p>
+                    관리자 비밀번호는 프런트엔드 코드나 공개 응답에 노출되지 않으며, 서버(Netlify)의 <code>ADMIN_PASSWORD</code> 환경변수로만 안전하게 검증됩니다.
+                  </p>
+                  <p className="text-gray-500 text-[11px]">
+                    ※ 비밀번호를 변경하시려면 <strong>Netlify 대시보드 → Site configuration → Environment variables</strong>에서 <code>ADMIN_PASSWORD</code> 값을 등록 또는 변경해 주세요. (미설정 시 기본값 8849)
+                  </p>
                 </div>
               </div>
             </div>
@@ -601,17 +638,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                 <span>
                   <strong>실시간 접수된 고객 상담 신청 내역:</strong> 고객이 홈페이지에서 무료 견적 상담을 신청하면 이곳에 자동으로 기록됩니다.
                 </span>
-                <span className="font-bold">총 {siteData.inquiries?.length || 0}건</span>
+                <span className="font-bold">총 {inquiries?.length || 0}건</span>
               </div>
 
-              {(!siteData.inquiries || siteData.inquiries.length === 0) ? (
+              {(!inquiries || inquiries.length === 0) ? (
                 <div className="py-16 text-center text-gray-400 space-y-2">
                   <Inbox className="w-10 h-10 mx-auto text-gray-300" />
                   <p className="text-sm font-bold">아직 접수된 상담 내역이 없습니다.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {siteData.inquiries.map((inq) => (
+                  {inquiries.map((inq) => (
                     <div
                       key={inq.id}
                       className="p-5 rounded-2xl bg-white border border-gray-200 shadow-xs flex flex-col sm:flex-row sm:items-start justify-between gap-4"
@@ -639,9 +676,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                           <span>전화걸기</span>
                         </a>
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm('이 상담 내역을 삭제하시겠습니까?')) {
-                              deleteInquiry(inq.id);
+                              await deleteInquiry(inq.id);
                               triggerSaveToast();
                             }
                           }}

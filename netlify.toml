@@ -1,0 +1,65 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Netlify Blobs configuration
+[blobs]
+
+# API redirects (MUST be placed before SPA fallback rule)
+[[redirects]]
+  from = "/api/site-data/reset"
+  to = "/.netlify/functions/site-data-reset"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/site-data"
+  to = "/.netlify/functions/site-data"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/login"
+  to = "/.netlify/functions/admin-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/session"
+  to = "/.netlify/functions/admin-session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/inquiries"
+  to = "/.netlify/functions/inquiries"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/inquiries/*"
+  to = "/.netlify/functions/inquiries"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/upload"
+  to = "/.netlify/functions/upload"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/media/*"
+  to = "/.netlify/functions/media"
+  status = 200
+  force = true
+
+# SPA client-side routing fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

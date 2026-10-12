@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   SiteData,
   HeroSlide,
@@ -17,7 +17,9 @@ import {
   MottoSectionData,
 } from '../types/siteData.ts';
 
-const STORAGE_KEY = 'airconsin_site_data_v4';
+const STORAGE_KEY = 'airconsin_site_data_v5';
+const ADMIN_TOKEN_KEY = 'airconsin_admin_token';
+const ADMIN_DRAFT_KEY = 'airconsin_admin_draft';
 
 export const DEFAULT_SITE_DATA: SiteData = {
   company: {
@@ -33,11 +35,10 @@ export const DEFAULT_SITE_DATA: SiteData = {
   settings: {
     customLogoUrl: '',
     kakaoChannelUrl: 'https://pf.kakao.com',
-    notificationEmail: 'ateamshero@gmail.com',
-    adminPassword: '8849',
+    notificationEmail: 'pjm2445@naver.com',
   },
   navMenu: [
-    { id: 'menu-1', label: '브랜드 스토리', enabled: true, type: 'section', target: 'brand-story' },
+    { id: 'menu-1', label: '에어컨신', enabled: true, type: 'section', target: 'brand-story' },
     { id: 'menu-2', label: '시공사례', enabled: true, type: 'section', target: 'portfolio' },
     { id: 'menu-3', label: '설치후기', enabled: true, type: 'section', target: 'reviews' },
     { id: 'menu-4', label: '사후관리', enabled: true, type: 'section', target: 'after-service' },
@@ -51,7 +52,7 @@ export const DEFAULT_SITE_DATA: SiteData = {
       id: 'slide-1',
       badge: '믿고 맡기는 에어컨설치',
       title: '정직한 시공, 정직한 견적',
-      subtitle: '에어컨신은 \'마진\'이 아닌 \'고객\'을 남기는 정직함으로 시공합니다.',
+      subtitle: "에어컨신은 '마진'이 아닌 '고객'을 남기는 정직함으로 시공합니다.",
       bgGradient: 'from-[#0d161d] via-[#1a2530] to-[#0c141a]',
       imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80',
     },
@@ -73,34 +74,10 @@ export const DEFAULT_SITE_DATA: SiteData = {
     },
   ],
   stats: [
-    {
-      id: 'stat-1',
-      value: 200,
-      unit: '%',
-      label: '~23년 계약 유치',
-      subtext: '전년 대비 폭발적 성장',
-    },
-    {
-      id: 'stat-2',
-      value: 153,
-      unit: '%',
-      label: '2024년 계약 유치',
-      subtext: '안정적인 신뢰 확보',
-    },
-    {
-      id: 'stat-3',
-      value: 175,
-      unit: '억',
-      label: '2024년 기준 매출',
-      subtext: '투명하고 탄탄한 재무 건전성',
-    },
-    {
-      id: 'stat-4',
-      value: 4000,
-      unit: '+',
-      label: '고객 유치',
-      subtext: '누적 시공 고객 수',
-    },
+    { id: 'stat-1', value: 200, unit: '%', label: '~23년 계약 유치', subtext: '전년 대비 폭발적 성장' },
+    { id: 'stat-2', value: 153, unit: '%', label: '2024년 계약 유치', subtext: '안정적인 신뢰 확보' },
+    { id: 'stat-3', value: 175, unit: '억', label: '2024년 기준 매출', subtext: '투명하고 탄탄한 재무 건전성' },
+    { id: 'stat-4', value: 4000, unit: '+', label: '고객 유치', subtext: '누적 시공 고객 수' },
   ],
   reviews: [
     {
@@ -274,20 +251,23 @@ export const DEFAULT_SITE_DATA: SiteData = {
     bullet1: '연중무휴: 08:00 ~ 20:00 (야간 및 주말 긴급상담 가능)',
     bullet2: '현장 방문 실측 및 레이저 맞춤 견적서 발송 100% 무료',
   },
-  inquiries: [
-    {
-      id: 'inq-sample-1',
-      name: '김태형',
-      phone: '010-8912-3456',
-      message: '다산자연앤자이 84타입 4대 견적 문의드립니다. 신축 입주 예정입니다.',
-      date: '2024.11.25 14:32',
-      read: true,
-    },
-  ],
+  inquiries: [],
 };
+
+export interface SaveResult {
+  success: boolean;
+  error?: string;
+  code?: string;
+}
 
 interface SiteDataContextType {
   siteData: SiteData;
+  adminToken: string | null;
+  isAdmin: boolean;
+  hasDraft: boolean;
+  inquiries: ConsultationInquiry[];
+  loginAdmin: (password: string) => Promise<{ success: boolean; error?: string }>;
+  logoutAdmin: () => void;
   updateCompany: (company: Partial<CompanyInfo>) => void;
   updateSettings: (settings: Partial<SiteSettings>) => void;
   updateNavMenu: (menu: NavMenuItem[]) => void;
@@ -305,16 +285,36 @@ interface SiteDataContextType {
   updateHonestEstimate: (honestEstimate: Partial<HonestEstimateData>) => void;
   updateHonestEstimateItem: (id: string, item: Partial<HonestEstimateItem>) => void;
   updateConsultationSection: (consultationSection: Partial<ConsultationSectionData>) => void;
-  addInquiry: (inquiry: Omit<ConsultationInquiry, 'id' | 'date'>) => void;
-  deleteInquiry: (id: string) => void;
-  resetToDefaults: () => void;
-  saveAllData: (partial?: Partial<SiteData>) => Promise<boolean>;
+  submitInquiry: (inquiry: { name: string; phone: string; message: string }) => Promise<{ success: boolean; error?: string }>;
+  deleteInquiry: (id: string) => Promise<boolean>;
+  fetchInquiries: () => Promise<void>;
+  resetToDefaults: () => Promise<boolean>;
+  saveAllData: (partial?: Partial<SiteData>) => Promise<SaveResult>;
+  restoreDraft: () => boolean;
+  discardDraft: () => void;
 }
 
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
 
 export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isInitialSyncDone = React.useRef(false);
+  const [adminToken, setAdminToken] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(ADMIN_TOKEN_KEY) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => !!adminToken);
+  const [hasDraft, setHasDraft] = useState<boolean>(() => {
+    try {
+      return !!localStorage.getItem(ADMIN_DRAFT_KEY);
+    } catch {
+      return false;
+    }
+  });
+
+  const [inquiries, setInquiries] = useState<ConsultationInquiry[]>([]);
 
   const [siteData, setSiteData] = useState<SiteData>(() => {
     try {
@@ -326,192 +326,174 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...parsed,
           company: { ...DEFAULT_SITE_DATA.company, ...parsed.company },
           settings: { ...DEFAULT_SITE_DATA.settings, ...parsed.settings },
-          navMenu: parsed.navMenu && parsed.navMenu.length > 0 ? parsed.navMenu : DEFAULT_SITE_DATA.navMenu,
-          heroSlides:
-            parsed.heroSlides && parsed.heroSlides.length > 0
-              ? parsed.heroSlides.map((slide: HeroSlide, idx: number) => ({
-                  ...DEFAULT_SITE_DATA.heroSlides[idx],
-                  ...slide,
-                  imageUrl:
-                    slide.imageUrl !== undefined
-                      ? slide.imageUrl
-                      : (DEFAULT_SITE_DATA.heroSlides[idx]?.imageUrl || ''),
-                }))
-              : DEFAULT_SITE_DATA.heroSlides,
-          stats: parsed.stats && parsed.stats.length > 0 ? parsed.stats : DEFAULT_SITE_DATA.stats,
-          reviews: parsed.reviews && parsed.reviews.length > 0 ? parsed.reviews : DEFAULT_SITE_DATA.reviews,
-          afterService: {
-            ...DEFAULT_SITE_DATA.afterService,
-            ...parsed.afterService,
-            centerImageUrl:
-              parsed.afterService?.centerImageUrl !== undefined
-                ? parsed.afterService.centerImageUrl
-                : DEFAULT_SITE_DATA.afterService.centerImageUrl,
-          },
-          growthTrust: {
-            ...DEFAULT_SITE_DATA.growthTrust,
-            ...(parsed.growthTrust || {}),
-            cards: parsed.growthTrust?.cards || DEFAULT_SITE_DATA.growthTrust.cards,
-          },
-          mottoSection: {
-            ...DEFAULT_SITE_DATA.mottoSection,
-            ...(parsed.mottoSection || {}),
-          },
-          honestEstimate: {
-            ...DEFAULT_SITE_DATA.honestEstimate,
-            ...(parsed.honestEstimate || {}),
-            items: parsed.honestEstimate?.items || DEFAULT_SITE_DATA.honestEstimate.items,
-          },
-          consultationSection: {
-            ...DEFAULT_SITE_DATA.consultationSection,
-            ...(parsed.consultationSection || {}),
-          },
-          inquiries: parsed.inquiries || DEFAULT_SITE_DATA.inquiries,
+          navMenu: Array.isArray(parsed.navMenu) && parsed.navMenu.length > 0 ? parsed.navMenu : DEFAULT_SITE_DATA.navMenu,
+          heroSlides: Array.isArray(parsed.heroSlides) && parsed.heroSlides.length > 0 ? parsed.heroSlides : DEFAULT_SITE_DATA.heroSlides,
+          stats: Array.isArray(parsed.stats) && parsed.stats.length > 0 ? parsed.stats : DEFAULT_SITE_DATA.stats,
+          reviews: Array.isArray(parsed.reviews) && parsed.reviews.length > 0 ? parsed.reviews : DEFAULT_SITE_DATA.reviews,
+          afterService: { ...DEFAULT_SITE_DATA.afterService, ...(parsed.afterService || {}) },
+          growthTrust: { ...DEFAULT_SITE_DATA.growthTrust, ...(parsed.growthTrust || {}) },
+          mottoSection: { ...DEFAULT_SITE_DATA.mottoSection, ...(parsed.mottoSection || {}) },
+          honestEstimate: { ...DEFAULT_SITE_DATA.honestEstimate, ...(parsed.honestEstimate || {}) },
+          consultationSection: { ...DEFAULT_SITE_DATA.consultationSection, ...(parsed.consultationSection || {}) },
+          inquiries: [],
         };
       }
     } catch (e) {
-      console.warn('Failed to parse saved site data from localStorage', e);
+      console.warn('LocalStorage initial parse notice:', e);
     }
     return DEFAULT_SITE_DATA;
   });
 
-  // Fetch persistent server-stored data on initial mount (enables cross-device sync like mobile)
+  // Verify stored session token on mount
+  useEffect(() => {
+    if (!adminToken) {
+      setIsAdmin(false);
+      return;
+    }
+    fetch('/api/admin/session', {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    })
+      .then((res) => {
+        if (res.ok) {
+          setIsAdmin(true);
+        } else {
+          // Token expired or invalid
+          setAdminToken(null);
+          setIsAdmin(false);
+          try {
+            localStorage.removeItem(ADMIN_TOKEN_KEY);
+          } catch {}
+        }
+      })
+      .catch(() => {
+        // Keep optimistic admin state during temporary network glitches
+      });
+  }, [adminToken]);
+
+  // Fetch initial public site data from server on mount
   useEffect(() => {
     let isMounted = true;
     fetch('/api/site-data')
       .then(async (res) => {
-        if (res.ok) {
-          const ct = res.headers.get('content-type');
-          if (ct && ct.includes('application/json')) {
-            const data = await res.json();
-            if (data && typeof data === 'object' && isMounted) {
-              if (data.empty) {
-                // If server file is empty/not created, push current local data to initialize server storage
-                const local = localStorage.getItem(STORAGE_KEY);
-                const dataToPush = local ? JSON.parse(local) : siteData;
-                fetch('/api/site-data', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(dataToPush),
-                }).catch(() => {});
-                return;
-              }
+        if (!res.ok) return;
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          // If server returned HTML (e.g. SPA fallback on 404), do NOT parse as JSON
+          return;
+        }
 
-              setSiteData((prev) => {
-                // Conflict resolution: if local changes were made more recently, keep local and push to server
-                const localTimestamp = (prev as any).updatedAt || 0;
-                const serverTimestamp = data.updatedAt || 0;
-                if (localTimestamp > serverTimestamp) {
-                  fetch('/api/site-data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(prev),
-                  }).catch(() => {});
-                  return prev;
-                }
+        const data = await res.json();
+        if (data && typeof data === 'object' && !data.empty && isMounted) {
+          setSiteData((prev) => {
+            const merged: SiteData = {
+              ...DEFAULT_SITE_DATA,
+              ...data,
+              company: { ...DEFAULT_SITE_DATA.company, ...(data.company || {}) },
+              settings: { ...DEFAULT_SITE_DATA.settings, ...(data.settings || {}) },
+              navMenu: Array.isArray(data.navMenu) && data.navMenu.length > 0 ? data.navMenu : prev.navMenu,
+              heroSlides: Array.isArray(data.heroSlides) && data.heroSlides.length > 0 ? data.heroSlides : prev.heroSlides,
+              stats: Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
+              reviews: Array.isArray(data.reviews) && data.reviews.length > 0 ? data.reviews : prev.reviews,
+              afterService: { ...DEFAULT_SITE_DATA.afterService, ...(data.afterService || {}) },
+              growthTrust: { ...DEFAULT_SITE_DATA.growthTrust, ...(data.growthTrust || {}) },
+              mottoSection: { ...DEFAULT_SITE_DATA.mottoSection, ...(data.mottoSection || {}) },
+              honestEstimate: { ...DEFAULT_SITE_DATA.honestEstimate, ...(data.honestEstimate || {}) },
+              consultationSection: { ...DEFAULT_SITE_DATA.consultationSection, ...(data.consultationSection || {}) },
+              inquiries: [],
+              updatedAt: data.updatedAt || Date.now(),
+            };
 
-                const merged: SiteData = {
-                  ...DEFAULT_SITE_DATA,
-                  ...data,
-                  company: { ...DEFAULT_SITE_DATA.company, ...(data.company || {}) },
-                  settings: { ...DEFAULT_SITE_DATA.settings, ...(data.settings || {}) },
-                  navMenu: Array.isArray(data.navMenu) && data.navMenu.length > 0 ? data.navMenu : prev.navMenu,
-                  heroSlides:
-                    Array.isArray(data.heroSlides) && data.heroSlides.length > 0
-                      ? data.heroSlides
-                      : prev.heroSlides,
-                  stats: Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
-                  reviews: Array.isArray(data.reviews) && data.reviews.length > 0 ? data.reviews : prev.reviews,
-                  afterService: {
-                    ...DEFAULT_SITE_DATA.afterService,
-                    ...(data.afterService || {}),
-                  },
-                  growthTrust: {
-                    ...DEFAULT_SITE_DATA.growthTrust,
-                    ...(data.growthTrust || {}),
-                  },
-                  mottoSection: {
-                    ...DEFAULT_SITE_DATA.mottoSection,
-                    ...(data.mottoSection || {}),
-                  },
-                  honestEstimate: {
-                    ...DEFAULT_SITE_DATA.honestEstimate,
-                    ...(data.honestEstimate || {}),
-                  },
-                  consultationSection: {
-                    ...DEFAULT_SITE_DATA.consultationSection,
-                    ...(data.consultationSection || {}),
-                  },
-                  inquiries: Array.isArray(data.inquiries) ? data.inquiries : prev.inquiries || [],
-                  updatedAt: data.updatedAt || Date.now(),
-                };
-                try {
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-                } catch (e) {}
-                return merged;
-              });
-            }
-          }
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         }
       })
       .catch((err) => {
-        console.info('Server sync running in local mode:', err);
-      })
-      .finally(() => {
-        isInitialSyncDone.current = true;
+        console.info('Client loaded with cached/default data:', err);
       });
 
-    // Listen to storage events for real-time synchronization across multiple browser tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setSiteData(JSON.parse(e.newValue));
-        } catch (err) {}
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
     return () => {
       isMounted = false;
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
-  // Save changes to localStorage and send update to backend API server
-  useEffect(() => {
+  // Fetch private inquiries when admin is authenticated
+  const fetchInquiries = useCallback(async () => {
+    if (!adminToken) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
-    } catch (e) {
-      console.warn('Failed to save site data to localStorage', e);
+      const res = await fetch('/api/inquiries', {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.inquiries)) {
+          setInquiries(data.inquiries);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load inquiries:', err);
     }
+  }, [adminToken]);
 
-    // Don't auto-send defaults to server before initial fetch completes
-    if (!isInitialSyncDone.current) return;
+  useEffect(() => {
+    if (isAdmin && adminToken) {
+      fetchInquiries();
+    } else {
+      setInquiries([]);
+    }
+  }, [isAdmin, adminToken, fetchInquiries]);
 
-    const timer = setTimeout(() => {
-      fetch('/api/site-data', {
+  // Admin login action
+  const loginAdmin = async (password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(siteData),
-      }).catch((err) => {
-        console.warn('Failed to sync to backend /api/site-data:', err);
+        body: JSON.stringify({ password }),
       });
-    }, 300);
 
-    return () => clearTimeout(timer);
-  }, [siteData]);
+      const data = await res.json().catch(() => null);
 
+      if (res.ok && data?.success && data?.token) {
+        setAdminToken(data.token);
+        setIsAdmin(true);
+        try {
+          localStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+        } catch {}
+        return { success: true };
+      }
+
+      return {
+        success: false,
+        error: data?.error || '비밀번호가 올바르지 않습니다.',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: '로그인 서버와 통신할 수 없습니다. 네트워크 상태를 확인해주세요.',
+      };
+    }
+  };
+
+  // Admin logout action
+  const logoutAdmin = () => {
+    setAdminToken(null);
+    setIsAdmin(false);
+    setInquiries([]);
+    try {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+    } catch {}
+  };
+
+  // In-memory UI edits (does NOT auto-POST to server)
   const updateCompany = (company: Partial<CompanyInfo>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      company: { ...prev.company, ...company },
-    }));
+    setSiteData((prev) => ({ ...prev, company: { ...prev.company, ...company } }));
   };
 
   const updateSettings = (settings: Partial<SiteSettings>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      settings: { ...prev.settings, ...settings },
-    }));
+    setSiteData((prev) => ({ ...prev, settings: { ...prev.settings, ...settings } }));
   };
 
   const updateNavMenu = (menu: NavMenuItem[]) => {
@@ -566,17 +548,11 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateAfterService = (data: Partial<AfterServiceData>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      afterService: { ...prev.afterService, ...data },
-    }));
+    setSiteData((prev) => ({ ...prev, afterService: { ...prev.afterService, ...data } }));
   };
 
   const updateGrowthTrust = (data: Partial<GrowthTrustData>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      growthTrust: { ...prev.growthTrust, ...data },
-    }));
+    setSiteData((prev) => ({ ...prev, growthTrust: { ...prev.growthTrust, ...data } }));
   };
 
   const updateGrowthTrustCard = (id: string, card: Partial<GrowthTrustCard>) => {
@@ -592,18 +568,12 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateMottoSection = (data: Partial<MottoSectionData>) => {
     setSiteData((prev) => ({
       ...prev,
-      mottoSection: {
-        ...(prev.mottoSection || DEFAULT_SITE_DATA.mottoSection!),
-        ...data,
-      },
+      mottoSection: { ...(prev.mottoSection || DEFAULT_SITE_DATA.mottoSection!), ...data },
     }));
   };
 
   const updateHonestEstimate = (data: Partial<HonestEstimateData>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      honestEstimate: { ...prev.honestEstimate, ...data },
-    }));
+    setSiteData((prev) => ({ ...prev, honestEstimate: { ...prev.honestEstimate, ...data } }));
   };
 
   const updateHonestEstimateItem = (id: string, item: Partial<HonestEstimateItem>) => {
@@ -617,84 +587,206 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateConsultationSection = (data: Partial<ConsultationSectionData>) => {
-    setSiteData((prev) => ({
-      ...prev,
-      consultationSection: { ...prev.consultationSection, ...data },
-    }));
+    setSiteData((prev) => ({ ...prev, consultationSection: { ...prev.consultationSection, ...data } }));
   };
 
-  const addInquiry = (inquiry: Omit<ConsultationInquiry, 'id' | 'date'>) => {
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const newInquiry: ConsultationInquiry = {
-      id: `inq-${Date.now()}`,
-      ...inquiry,
-      date: dateStr,
-      read: false,
-    };
-    setSiteData((prev) => ({
-      ...prev,
-      inquiries: [newInquiry, ...(prev.inquiries || [])],
-    }));
-  };
-
-  const deleteInquiry = (id: string) => {
-    setSiteData((prev) => ({
-      ...prev,
-      inquiries: (prev.inquiries || []).filter((item) => item.id !== id),
-    }));
-  };
-
-  const resetToDefaults = () => {
-    setSiteData(DEFAULT_SITE_DATA);
+  // Public visitor consultation submit
+  const submitInquiry = async (data: { name: string; phone: string; message: string }): Promise<{ success: boolean; error?: string }> => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
-      console.warn(e);
-    }
-    fetch('/api/site-data/reset', { method: 'POST' }).catch(() => {});
-  };
-
-  const saveAllData = async (partial?: Partial<SiteData>): Promise<boolean> => {
-    const now = Date.now();
-    const updated: SiteData = {
-      ...siteData,
-      ...(partial || {}),
-      updatedAt: now,
-    };
-    setSiteData(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.warn('localStorage save warning:', e);
-    }
-    try {
-      const res = await fetch('/api/site-data', {
+      const res = await fetch('/api/inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
+        body: JSON.stringify(data),
       });
-      if (res.ok) {
-        const result = await res.json().catch(() => null);
-        if (result && result.siteData) {
-          setSiteData(result.siteData);
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(result.siteData));
-          } catch (e) {}
+
+      const resJson = await res.json().catch(() => null);
+
+      if (res.ok && resJson?.success) {
+        if (isAdmin && adminToken) {
+          fetchInquiries();
         }
+        return { success: true };
+      }
+
+      return {
+        success: false,
+        error: resJson?.error || '상담 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: '네트워크 연결 상태를 확인 후 다시 시도해 주세요.',
+      };
+    }
+  };
+
+  // Admin delete inquiry
+  const deleteInquiry = async (id: string): Promise<boolean> => {
+    if (!adminToken) return false;
+    try {
+      const res = await fetch(`/api/inquiries?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      if (res.ok) {
+        setInquiries((prev) => prev.filter((inq) => inq.id !== id));
         return true;
       }
       return false;
-    } catch (err) {
-      console.warn('Backend /api/site-data save error:', err);
+    } catch {
       return false;
     }
+  };
+
+  // Reset to defaults
+  const resetToDefaults = async (): Promise<boolean> => {
+    if (!adminToken) return false;
+    try {
+      const res = await fetch('/api/site-data/reset', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      if (res.ok) {
+        setSiteData(DEFAULT_SITE_DATA);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(ADMIN_DRAFT_KEY);
+          setHasDraft(false);
+        } catch {}
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  // Explicit Admin Save (with strict status check, draft backup, and categorized errors)
+  const saveAllData = async (partial?: Partial<SiteData>): Promise<SaveResult> => {
+    if (!adminToken) {
+      return {
+        success: false,
+        error: '관리자 로그인이 필요합니다. 다시 로그인해주세요.',
+        code: 'UNAUTHORIZED',
+      };
+    }
+
+    const payload: SiteData = {
+      ...siteData,
+      ...(partial || {}),
+      updatedAt: Date.now(),
+    };
+
+    // Save as local draft first in case request fails
+    try {
+      localStorage.setItem(ADMIN_DRAFT_KEY, JSON.stringify(payload));
+      setHasDraft(true);
+    } catch (e) {
+      console.warn('Failed to write local draft:', e);
+    }
+
+    try {
+      const res = await fetch('/api/site-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // Verify HTTP response Content-Type
+      const contentType = res.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+
+      if (!isJson) {
+        // Returned HTML (e.g. Netlify SPA index.html on 404)
+        return {
+          success: false,
+          error: 'API 경로를 찾을 수 없습니다. (Netlify Functions 리다이렉트 및 배포 설정을 확인하세요)',
+          code: 'API_NOT_FOUND',
+        };
+      }
+
+      const result = await res.json().catch(() => null);
+
+      if (res.ok && result?.success) {
+        // Saved successfully to persistent store!
+        const serverData = result.siteData || payload;
+        setSiteData(serverData);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(serverData));
+          // Clean up draft on successful save
+          localStorage.removeItem(ADMIN_DRAFT_KEY);
+          setHasDraft(false);
+        } catch {}
+        return { success: true };
+      }
+
+      // Handle specific HTTP error status codes
+      if (res.status === 401 || res.status === 403) {
+        return {
+          success: false,
+          error: result?.error || '관리자 인증이 만료되었거나 올바르지 않습니다. 다시 로그인해 주세요.',
+          code: 'UNAUTHORIZED',
+        };
+      }
+
+      if (res.status === 413) {
+        return {
+          success: false,
+          error: '저장 데이터 용량이 너무 큽니다. 사진/로고 크기를 줄여서 다시 시도해 주세요.',
+          code: 'PAYLOAD_TOO_LARGE',
+        };
+      }
+
+      return {
+        success: false,
+        error: result?.error || '서버에 저장하지 못했습니다. (서버 응답 오류)',
+        code: result?.code || 'SERVER_ERROR',
+      };
+    } catch (err: any) {
+      console.error('saveAllData network exception:', err);
+      return {
+        success: false,
+        error: '네트워크 연결 오류입니다. 인터넷 상태를 확인해주세요. (수정 내용은 로컬 초안에 안전하게 보관되었습니다)',
+        code: 'NETWORK_ERROR',
+      };
+    }
+  };
+
+  // Draft recovery functions
+  const restoreDraft = (): boolean => {
+    try {
+      const draft = localStorage.getItem(ADMIN_DRAFT_KEY);
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        setSiteData((prev) => ({ ...prev, ...parsed }));
+        return true;
+      }
+    } catch {}
+    return false;
+  };
+
+  const discardDraft = () => {
+    try {
+      localStorage.removeItem(ADMIN_DRAFT_KEY);
+      setHasDraft(false);
+    } catch {}
   };
 
   return (
     <SiteDataContext.Provider
       value={{
         siteData,
+        adminToken,
+        isAdmin,
+        hasDraft,
+        inquiries,
+        loginAdmin,
+        logoutAdmin,
         updateCompany,
         updateSettings,
         updateNavMenu,
@@ -712,10 +804,13 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateHonestEstimate,
         updateHonestEstimateItem,
         updateConsultationSection,
-        addInquiry,
+        submitInquiry,
         deleteInquiry,
+        fetchInquiries,
         resetToDefaults,
         saveAllData,
+        restoreDraft,
+        discardDraft,
       }}
     >
       {children}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, KeyRound, AlertCircle, ArrowRight } from 'lucide-react';
+import { X, Lock, KeyRound, AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext.tsx';
 
 interface PasswordModalProps {
@@ -13,29 +13,39 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { siteData } = useSiteData();
+  const { loginAdmin } = useSiteData();
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPassword = siteData.settings.adminPassword || '8849';
+    if (!password.trim()) {
+      setErrorMsg('비밀번호를 입력해주세요.');
+      return;
+    }
 
-    if (password.trim() === correctPassword) {
-      setError(false);
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    const result = await loginAdmin(password.trim());
+    setIsSubmitting(false);
+
+    if (result.success) {
       setPassword('');
+      setErrorMsg(null);
       onSuccess();
       onClose();
     } else {
-      setError(true);
+      setErrorMsg(result.error || '비밀번호가 올바르지 않습니다.');
     }
   };
 
   const handleClose = () => {
     setPassword('');
-    setError(false);
+    setErrorMsg(null);
     onClose();
   };
 
@@ -65,7 +75,7 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
             관리자 로그인
           </h3>
           <p className="text-xs text-gray-500 mt-1 break-keep">
-            홈페이지 컨텐츠 수정을 위해 관리자 비밀번호를 입력해주세요.
+            홈페이지 컨텐츠 수정을 위해 서버에 설정된 관리자 비밀번호를 입력해주세요.
           </p>
 
           <form onSubmit={handleSubmit} className="w-full mt-5 sm:mt-6 space-y-4">
@@ -76,11 +86,11 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (error) setError(false);
+                  if (errorMsg) setErrorMsg(null);
                 }}
-                placeholder="비밀번호 입력 (4자리)"
+                placeholder="비밀번호 입력"
                 className={`w-full py-3.5 pl-11 pr-4 text-center tracking-widest text-base font-bold rounded-xl border bg-gray-50 focus:bg-white focus:outline-none transition-all ${
-                  error
+                  errorMsg
                     ? 'border-red-400 text-red-600 focus:ring-2 focus:ring-red-200'
                     : 'border-gray-200 text-gray-800 focus:border-[#0070d2] focus:ring-2 focus:ring-blue-100'
                 }`}
@@ -88,19 +98,33 @@ export const PasswordModal: React.FC<PasswordModalProps> = ({
               <KeyRound className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {error && (
+            {errorMsg && (
               <p className="text-xs text-red-500 flex items-center justify-center gap-1 font-semibold animate-fadeIn">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>비밀번호가 올바르지 않습니다.</span>
+                <span>{errorMsg}</span>
               </p>
             )}
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-[#0070d2] hover:bg-[#005fb8] active:scale-[0.99] text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              disabled={isSubmitting}
+              className={`w-full py-3.5 rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                isSubmitting
+                  ? 'bg-blue-300 text-white cursor-wait'
+                  : 'bg-[#0070d2] hover:bg-[#005fb8] active:scale-[0.99] text-white'
+              }`}
             >
-              <span>확인 및 로그인</span>
-              <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>인증 확인 중...</span>
+                </>
+              ) : (
+                <>
+                  <span>확인 및 로그인</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
         </div>

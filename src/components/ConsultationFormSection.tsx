@@ -9,7 +9,7 @@ interface ConsultationFormSectionProps {
 export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = ({
   onSuccessSubmit,
 }) => {
-  const { siteData, addInquiry } = useSiteData();
+  const { siteData, submitInquiry } = useSiteData();
   const targetEmail = siteData.settings.notificationEmail || 'ateamshero@gmail.com';
 
   const [formData, setFormData] = useState({
@@ -52,15 +52,15 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      // 1. Save to site inquiries database for admin
-      addInquiry({
+    try {
+      // 1. Submit to separate inquiries API for admin (does not touch siteData)
+      await submitInquiry({
         name: formData.name,
         phone: formData.phone,
         message: formData.message || '견적 및 방문 실측 상담 요청',
@@ -76,7 +76,6 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
         `• 접수 일시: ${new Date().toLocaleString('ko-KR')}\n`
       );
 
-      // Attempt background mailto trigger or notification
       try {
         const mailtoLink = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
         const hiddenIframe = document.createElement('iframe');
@@ -93,7 +92,10 @@ export const ConsultationFormSection: React.FC<ConsultationFormSectionProps> = (
       if (onSuccessSubmit) {
         onSuccessSubmit(formData);
       }
-    }, 600);
+    } catch {
+      setIsSubmitting(false);
+      alert('상담 접수 중 문제가 발생했습니다. 전화(010-4653-8887)로 문의해 주세요.');
+    }
   };
 
   const resetForm = () => {
