@@ -26,9 +26,10 @@ import {
   TrendingUp,
   Video,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { useSiteData, DEFAULT_SITE_DATA } from '../context/SiteDataContext.tsx';
-import { GrowthTrustCard, GrowthTrustData } from '../types/siteData.ts';
+import { GrowthTrustCard, GrowthTrustData, SiteData } from '../types/siteData.ts';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -64,6 +65,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
   >('menu');
 
   const [saveToast, setSaveToast] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string>('');
 
   // Local state for atomic edits
   const [companyForm, setCompanyForm] = useState(siteData.company);
@@ -200,22 +203,41 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveOnly = async () => {
-    await saveAllData({
+  const handleSaveOnly = async (): Promise<boolean> => {
+    setIsSaving(true);
+    const fullPayload: Partial<SiteData> = {
       company: companyForm,
       settings: settingsForm,
       afterService: asForm,
       honestEstimate: estimateForm,
       consultationSection: contactForm,
       growthTrust: growthTrustForm,
+      navMenu: siteData.navMenu,
+      heroSlides: siteData.heroSlides,
+      stats: siteData.stats,
+      reviews: siteData.reviews,
       ...(mottoForm ? { mottoSection: mottoForm } : {}),
-    });
-    triggerSaveToast();
+      updatedAt: Date.now(),
+    };
+
+    const success = await saveAllData(fullPayload);
+    setIsSaving(false);
+    if (success) {
+      setLastSavedTime(new Date().toLocaleTimeString('ko-KR'));
+      setSaveToast(true);
+      setTimeout(() => setSaveToast(false), 3000);
+      return true;
+    } else {
+      alert('서버 저장에 실패했습니다. 네트워크 상태를 확인하시거나 잠시 후 다시 시도해 주세요.');
+      return false;
+    }
   };
 
   const handleSaveAndClose = async () => {
-    await handleSaveOnly();
-    onClose();
+    const success = await handleSaveOnly();
+    if (success) {
+      onClose();
+    }
   };
 
   return (
@@ -238,29 +260,49 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                 </span>
               </h2>
               <p className="hidden sm:block text-xs text-slate-400">
-                수정한 모든 컨텐츠는 실시간으로 홈페이지 전체에 연동 및 자동 저장됩니다
+                수정한 모든 컨텐츠는 실시간으로 홈페이지 전체에 연동 및 서버에 영구 저장됩니다
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {saveToast && (
+            {isSaving && (
+              <span className="flex items-center gap-1.5 text-[11px] sm:text-xs text-blue-300 font-bold bg-blue-950/80 px-2.5 sm:px-3 py-1 rounded-full border border-blue-700 animate-fadeIn">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" /> 서버 저장 중...
+              </span>
+            )}
+            {!isSaving && saveToast && (
               <span className="flex items-center gap-1 text-[11px] sm:text-xs text-emerald-400 font-bold bg-emerald-950/80 px-2.5 sm:px-3 py-1 rounded-full border border-emerald-800 animate-fadeIn">
-                <CheckCircle2 className="w-3.5 h-3.5" /> 저장 완료!
+                <CheckCircle2 className="w-3.5 h-3.5" /> 서버 저장 완료! {lastSavedTime && `(${lastSavedTime})`}
               </span>
             )}
 
             <button
-              onClick={handleSaveOnly}
-              className="inline-flex items-center gap-1 px-3 sm:px-4 py-1.5 bg-[#0070d2] hover:bg-[#005fb8] text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
-              title="현재 수정한 내용 저장"
+              onClick={() => handleSaveOnly()}
+              disabled={isSaving}
+              className={`inline-flex items-center gap-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 ${
+                isSaving
+                  ? 'bg-blue-400 text-white cursor-not-allowed opacity-80'
+                  : 'bg-[#0070d2] hover:bg-[#005fb8] text-white'
+              }`}
+              title="현재 수정한 내용 서버 저장"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>저장하기</span>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>저장 중...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>저장하기</span>
+                </>
+              )}
             </button>
 
             <button
               onClick={handleSaveAndClose}
+              disabled={isSaving}
               className="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
               title="저장 및 닫기"
             >
@@ -1830,18 +1872,37 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSaveOnly}
-              className="px-4 sm:px-5 py-2.5 bg-white border border-blue-200 text-[#0070d2] hover:bg-blue-50 rounded-xl text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors"
+              onClick={() => handleSaveOnly()}
+              disabled={isSaving}
+              className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors ${
+                isSaving
+                  ? 'bg-slate-100 border border-slate-300 text-slate-400 cursor-not-allowed'
+                  : 'bg-white border border-blue-200 text-[#0070d2] hover:bg-blue-50'
+              }`}
             >
-              <Save className="w-4 h-4" />
-              <span>저장하기</span>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>서버 저장 중...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>저장하기</span>
+                </>
+              )}
             </button>
             <button
               onClick={handleSaveAndClose}
-              className="px-5 sm:px-6 py-2.5 bg-[#0070d2] hover:bg-[#005fb8] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-colors active:scale-95"
+              disabled={isSaving}
+              className={`px-5 sm:px-6 py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-colors active:scale-95 ${
+                isSaving
+                  ? 'bg-blue-400 text-white cursor-not-allowed opacity-80'
+                  : 'bg-[#0070d2] hover:bg-[#005fb8] text-white'
+              }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>저장 및 닫기</span>
+              <span>{isSaving ? '저장 처리 중...' : '저장 및 닫기'}</span>
             </button>
           </div>
         </div>

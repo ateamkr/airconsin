@@ -385,19 +385,43 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (ct && ct.includes('application/json')) {
             const data = await res.json();
             if (data && typeof data === 'object' && isMounted) {
+              if (data.empty) {
+                // If server file is empty/not created, push current local data to initialize server storage
+                const local = localStorage.getItem(STORAGE_KEY);
+                const dataToPush = local ? JSON.parse(local) : siteData;
+                fetch('/api/site-data', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(dataToPush),
+                }).catch(() => {});
+                return;
+              }
+
               setSiteData((prev) => {
+                // Conflict resolution: if local changes were made more recently, keep local and push to server
+                const localTimestamp = (prev as any).updatedAt || 0;
+                const serverTimestamp = data.updatedAt || 0;
+                if (localTimestamp > serverTimestamp) {
+                  fetch('/api/site-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(prev),
+                  }).catch(() => {});
+                  return prev;
+                }
+
                 const merged: SiteData = {
                   ...DEFAULT_SITE_DATA,
                   ...data,
                   company: { ...DEFAULT_SITE_DATA.company, ...(data.company || {}) },
                   settings: { ...DEFAULT_SITE_DATA.settings, ...(data.settings || {}) },
-                  navMenu: data.navMenu && data.navMenu.length > 0 ? data.navMenu : prev.navMenu,
+                  navMenu: Array.isArray(data.navMenu) && data.navMenu.length > 0 ? data.navMenu : prev.navMenu,
                   heroSlides:
-                    data.heroSlides && data.heroSlides.length > 0
+                    Array.isArray(data.heroSlides) && data.heroSlides.length > 0
                       ? data.heroSlides
                       : prev.heroSlides,
-                  stats: data.stats && data.stats.length > 0 ? data.stats : prev.stats,
-                  reviews: data.reviews && data.reviews.length > 0 ? data.reviews : prev.reviews,
+                  stats: Array.isArray(data.stats) && data.stats.length > 0 ? data.stats : prev.stats,
+                  reviews: Array.isArray(data.reviews) && data.reviews.length > 0 ? data.reviews : prev.reviews,
                   afterService: {
                     ...DEFAULT_SITE_DATA.afterService,
                     ...(data.afterService || {}),
@@ -418,7 +442,8 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                     ...DEFAULT_SITE_DATA.consultationSection,
                     ...(data.consultationSection || {}),
                   },
-                  inquiries: data.inquiries || prev.inquiries || [],
+                  inquiries: Array.isArray(data.inquiries) ? data.inquiries : prev.inquiries || [],
+                  updatedAt: data.updatedAt || Date.now(),
                 };
                 try {
                   localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
@@ -427,15 +452,6 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               });
             }
           }
-        } else if (res.status === 404) {
-          // If server file doesn't exist yet, push current local data to initialize server storage
-          const local = localStorage.getItem(STORAGE_KEY);
-          const dataToPush = local ? JSON.parse(local) : siteData;
-          fetch('/api/site-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToPush),
-          }).catch(() => {});
         }
       })
       .catch((err) => {
@@ -640,7 +656,12 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const saveAllData = async (partial?: Partial<SiteData>): Promise<boolean> => {
-    const updated: SiteData = partial ? { ...siteData, ...partial } : siteData;
+    const now = Date.now();
+    const updated: SiteData = {
+      ...siteData,
+      ...(partial || {}),
+      updatedAt: now,
+    };
     setSiteData(updated);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -653,7 +674,17 @@ export const SiteDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       });
-      return res.ok;
+      if (res.ok) {
+        const result = await res.json().catch(() => null);
+        if (result && result.siteData) {
+          setSiteData(result.siteData);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(result.siteData));
+          } catch (e) {}
+        }
+        return true;
+      }
+      return false;
     } catch (err) {
       console.warn('Backend /api/site-data save error:', err);
       return false;

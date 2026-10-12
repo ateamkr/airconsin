@@ -136,4 +136,5 @@ export interface SiteData {
   honestEstimate: HonestEstimateData;
   consultationSection: ConsultationSectionData;
   inquiries: ConsultationInquiry[];
+  updatedAt?: number;
 }

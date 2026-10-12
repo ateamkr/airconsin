@@ -26,9 +26,11 @@ function siteDataApiPlugin(): Plugin {
             if (fs.existsSync(dataFile)) {
               try {
                 const content = fs.readFileSync(dataFile, 'utf-8');
-                res.setHeader('Content-Type', 'application/json; charset=utf-8');
-                res.statusCode = 200;
-                return res.end(content);
+                if (content && content.trim().length > 0) {
+                  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                  res.statusCode = 200;
+                  return res.end(content);
+                }
               } catch (e) {
                 res.setHeader('Content-Type', 'application/json; charset=utf-8');
                 res.statusCode = 500;
@@ -36,8 +38,8 @@ function siteDataApiPlugin(): Plugin {
               }
             }
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
-            res.statusCode = 404;
-            return res.end(JSON.stringify({ message: 'No saved site data yet' }));
+            res.statusCode = 200;
+            return res.end(JSON.stringify({ empty: true }));
           }
 
           if (req.method === 'POST') {
@@ -47,11 +49,52 @@ function siteDataApiPlugin(): Plugin {
             });
             req.on('end', () => {
               try {
-                const parsed = JSON.parse(body);
-                fs.writeFileSync(dataFile, JSON.stringify(parsed, null, 2), 'utf-8');
+                const incoming = JSON.parse(body);
+                let existing: Record<string, any> = {};
+                if (fs.existsSync(dataFile)) {
+                  try {
+                    existing = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
+                  } catch (e) {}
+                }
+
+                const merged = {
+                  ...existing,
+                  ...incoming,
+                  company: { ...(existing.company || {}), ...(incoming.company || {}) },
+                  settings: { ...(existing.settings || {}), ...(incoming.settings || {}) },
+                  afterService: { ...(existing.afterService || {}), ...(incoming.afterService || {}) },
+                  growthTrust: { ...(existing.growthTrust || {}), ...(incoming.growthTrust || {}) },
+                  honestEstimate: { ...(existing.honestEstimate || {}), ...(incoming.honestEstimate || {}) },
+                  consultationSection: { ...(existing.consultationSection || {}), ...(incoming.consultationSection || {}) },
+                  updatedAt: Date.now(),
+                };
+
+                if (Array.isArray(incoming.navMenu) && incoming.navMenu.length > 0) {
+                  merged.navMenu = incoming.navMenu;
+                }
+                if (Array.isArray(incoming.heroSlides) && incoming.heroSlides.length > 0) {
+                  merged.heroSlides = incoming.heroSlides;
+                }
+                if (Array.isArray(incoming.stats) && incoming.stats.length > 0) {
+                  merged.stats = incoming.stats;
+                }
+                if (Array.isArray(incoming.reviews) && incoming.reviews.length > 0) {
+                  merged.reviews = incoming.reviews;
+                }
+                if (Array.isArray(incoming.inquiries)) {
+                  merged.inquiries = incoming.inquiries;
+                }
+                if (incoming.mottoSection) {
+                  merged.mottoSection = incoming.mottoSection;
+                }
+
+                const tempFile = `${dataFile}.tmp.${Date.now()}`;
+                fs.writeFileSync(tempFile, JSON.stringify(merged, null, 2), 'utf-8');
+                fs.renameSync(tempFile, dataFile);
+
                 res.setHeader('Content-Type', 'application/json; charset=utf-8');
                 res.statusCode = 200;
-                return res.end(JSON.stringify({ success: true, siteData: parsed }));
+                return res.end(JSON.stringify({ success: true, siteData: merged, updatedAt: merged.updatedAt }));
               } catch (err) {
                 res.setHeader('Content-Type', 'application/json; charset=utf-8');
                 res.statusCode = 500;
